@@ -1,0 +1,1 @@
+export {WastePickup} from './WastePickup';
