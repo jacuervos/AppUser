@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo} from 'react';
+import React, {useCallback, useEffect, useMemo, useState, useRef} from 'react';
 import {
   Text,
   View,
@@ -17,14 +17,21 @@ import {useNavigation} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {ChangeImage} from '../../components/modals/ChangeImage';
 import {PrimaryButton} from '../../components/buttons/PrimaryButton';
 import {PrincipalTextInput} from '../../components/textInput/PrincipalTextInput';
 import {PrincipalInputSelect} from '../../components/inputSelect/PrincipalInputSelect';
 import useTypeIdentificationStore from '../../store/typeIdentificationStore';
 import {useAuth} from '../../hooks/useAuth';
 import {colors} from '../../utils/constants';
+import {openCamera, openGallery} from '../../functions/Camera';
 import RegisterStyles from './styles';
-type RootStackParamList = {};
+import {BottomSheetModal} from "@gorhom/bottom-sheet";
+
+type RootStackParamList = {
+  Tab: undefined;
+};
+
 
 const Register = ({}) => {
   const navigation =
@@ -32,14 +39,17 @@ const Register = ({}) => {
 
   const {typeIdentifications, getTypeIdentifications} =
     useTypeIdentificationStore();
-  const {isLoading, error, clearError} = useAuth();
+  const {isLoading, error, clearError, register } = useAuth();
+
+  const [imageProfile, setImageProfile] = useState('');
+  const sheetRef = useRef<BottomSheetModal>(null);
 
   const creteSchema = Yup.object().shape({
     email: Yup.string()
       .email('Ingresa un email válido')
       .required('El email es requerido'),
     password: Yup.string()
-      .min(6, 'La contraseña debe tener al menos 6 caracteres')
+      .min(8, 'La contraseña debe tener al menos 8 caracteres')
       .required('La contraseña es requerida'),
     password_confirmation: Yup.string()
       .oneOf([Yup.ref('password')], 'Las contraseñas no coinciden')
@@ -52,9 +62,31 @@ const Register = ({}) => {
     ),
   });
 
-  const handleRegister = () => {
-    console.log('');
+  const handleRegister = async (values: any) => {
+    const findTypeIdentification = typeIdentifications.find((type) => type.name ===  values.type_identification);
+    await register({
+      ...values,
+      email: values.email.toLowerCase(),
+      type_identification: findTypeIdentification !== undefined ? findTypeIdentification.id : 0,
+      images: imageProfile,
+    });
+    navigation.replace('Tab');
     clearError();
+  };
+
+  const openModal = () => {
+    sheetRef?.current?.present();
+  };
+
+  const handleTakeImage = async (image: 'photo' | 'gallery') => {
+    if(image === 'photo'){
+      const photo = await openCamera();
+      setImageProfile(photo?.url ?? '');
+    }else {
+      const photo = await openGallery();
+      setImageProfile(photo?.url ?? '');
+    }
+    sheetRef?.current?.dismiss();
   };
 
   const getType = useCallback(async () => {
@@ -91,11 +123,13 @@ const Register = ({}) => {
               colors={[colors.primary, colors.white]}>
               <View style={RegisterStyles.containerImage}>
                 <Image
-                  source={require('../../../assets/images/login.png')}
-                  style={RegisterStyles.image}
+                    source={imageProfile ? {uri: imageProfile} : require('../../../assets/images/login.png')}
+                    style={RegisterStyles.image}
                 />
               </View>
-              <Pressable style={RegisterStyles.containerCamera}>
+              <Pressable
+                  onPress={openModal}
+                  style={RegisterStyles.containerCamera}>
                 <MaterialIcons
                   name={'camera-alt'}
                   color={colors.black}
@@ -224,6 +258,7 @@ const Register = ({}) => {
           </View>
         </ScrollView>
       </TouchableWithoutFeedback>
+      <ChangeImage sheetRef={sheetRef} handleTakeImage={handleTakeImage} />
     </KeyboardAvoidingView>
   );
 };

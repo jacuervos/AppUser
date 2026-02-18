@@ -1,15 +1,17 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { 
-  LoginCredentials, 
-  LoginResponse, 
+import {
+  LoginCredentials,
+  LoginResponse,
   UserInfoResponse,
   ForgotPasswordRequest,
   ForgotPasswordResponse,
   ValidateTokenRequest,
   ValidateTokenResponse,
   ResetPasswordRequest,
-  ResetPasswordResponse
+  ResetPasswordResponse,
+  RegisterCredentials,
+  RegisterResponse,
 } from '../types/auth.types';
 
 class AuthApiService {
@@ -62,6 +64,42 @@ class AuthApiService {
   }
 
   /**
+   * Register user with diferents params
+   * @param credentials - Email, password, name, phone, identification, typeIdentification
+   * @returns Register response with info user
+   */
+  async register(credentials: RegisterCredentials): Promise<RegisterResponse> {
+    try {
+      const formData = new FormData();
+      formData.append('name', credentials.name);
+      formData.append('phone', credentials.phone);
+      formData.append('identification', credentials.identification);
+      formData.append('type_identification', credentials.type_identification);
+      formData.append('email', credentials.email);
+      formData.append('password', credentials.password);
+      formData.append('password_confirmation', credentials.password_confirmation);
+      formData.append('images', {
+        uri: credentials.images,
+        type: 'image/png',
+        name: `image_${credentials.name.replace(/\s+/g, '_')}_${credentials.identification}.png`,
+      });
+      const response: AxiosResponse<RegisterResponse> = await this.api.post(
+          '/register_user',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.log(error, 'aca');
+      throw this.handleError(error);
+    }
+  }
+
+  /**
    * Login user with email and password
    * @param credentials - Email and password
    * @returns Login response with token and role
@@ -102,7 +140,7 @@ class AuthApiService {
   async getUserInfo(): Promise<UserInfoResponse> {
     try {
       const response: AxiosResponse<UserInfoResponse> = await this.api.get('/auth_me');
-      
+
       // Save user info to AsyncStorage
       if (response.data.success && response.data.data) {
         await AsyncStorage.setItem('user_info', JSON.stringify(response.data.data));
