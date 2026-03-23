@@ -12,5 +12,5 @@ export interface IPrincipalInputSelect {
 
 export interface IOptions {
   label: string;
-  value: string;
+  value: number;
 }

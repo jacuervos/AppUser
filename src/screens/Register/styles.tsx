@@ -51,6 +51,7 @@ const RegisterStyles = StyleSheet.create({
   image: {
     width: 80,
     height: 80,
+    borderRadius: 40,
   },
   containerTitle: {
     flexDirection: 'row',
@@ -95,7 +96,7 @@ const RegisterStyles = StyleSheet.create({
     fontFamily: fontFamily.fontFamilyRegular,
     textDecorationLine: 'underline',
     marginTop: 10,
-    marginBottom: 80,
+    marginBottom: 120,
     fontSize: 15,
   },
   errorContainer: {

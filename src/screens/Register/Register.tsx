@@ -57,13 +57,13 @@ const Register = ({}) => {
     name: Yup.string().required('El nombre es requerido'),
     phone: Yup.string().required('El teléfono es requerido'),
     identification: Yup.string().required('La identificación es requerida'),
-    typeIdentification: Yup.string().required(
+    type_identification: Yup.string().required(
       'El tipo de identificación es requerido',
     ),
   });
 
   const handleRegister = async (values: any) => {
-    const findTypeIdentification = typeIdentifications.find((type) => type.name ===  values.type_identification);
+    const findTypeIdentification = typeIdentifications.find((type) => type.id ===  values.type_identification);
     await register({
       ...values,
       email: values.email.toLowerCase(),
@@ -99,7 +99,7 @@ const Register = ({}) => {
     }
     return typeIdentifications.map(item => ({
       label: item.name,
-      value: item.name,
+      value: item.id,
     }));
   }, [typeIdentifications]);
 
@@ -148,7 +148,7 @@ const Register = ({}) => {
                 password_confirmation: '',
                 name: '',
                 phone: '',
-                typeIdentification: '',
+                type_identification: '',
                 identification: '',
               }}
               validationSchema={creteSchema}
@@ -182,14 +182,14 @@ const Register = ({}) => {
                   />
                   <PrincipalInputSelect
                     label={'Seleccionar documento'}
-                    value={values.typeIdentification}
-                    valueChange={'typeIdentification'}
+                    value={values.type_identification}
+                    valueChange={'type_identification'}
                     change={setFieldValue}
                     options={listTypeIdentifications}
                     style={RegisterStyles.inputSelect}
                     error={
-                      !!errors?.typeIdentification &&
-                      touched?.typeIdentification
+                      !!errors?.type_identification &&
+                      touched?.type_identification
                     }
                   />
                   <PrincipalTextInput

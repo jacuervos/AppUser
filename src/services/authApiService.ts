@@ -94,7 +94,6 @@ class AuthApiService {
       );
       return response.data;
     } catch (error: any) {
-      console.log(error, 'aca');
       throw this.handleError(error);
     }
   }
