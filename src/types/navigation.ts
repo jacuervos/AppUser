@@ -46,4 +46,5 @@ export type RootStackParamList = {
       steps?: string[];
     }>;
   };
+  Profile: undefined;
 };

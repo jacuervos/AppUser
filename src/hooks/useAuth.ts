@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import useAuthStore from '../store/authStore';
-import {LoginCredentials, RegisterCredentials} from '../types/auth.types';
+import {LoginCredentials, RegisterCredentials, UpdateCredentials} from '../types/auth.types';
 
 /**
  * Custom hook for authentication operations
@@ -18,10 +18,9 @@ export const useAuth = () => {
     // Actions
     login,
     register,
+    updateProfile,
     logout,
     getUserInfo,
-    setLoading,
-    setError,
     clearError,
     initializeAuth,
   } = useAuthStore();
@@ -111,6 +110,19 @@ export const useAuth = () => {
     };
   };
 
+  /**
+   * Update with credentials
+   */
+  const handleUpdate = async (credentials: UpdateCredentials, id: number) => {
+    try {
+      await updateProfile(credentials, id);
+    } catch (error) {
+      // Error is already handled in the store
+      throw error;
+    }
+  };
+
+
   return {
     // State
     isAuthenticated,
@@ -122,6 +134,7 @@ export const useAuth = () => {
     // Actions
     login: handleLogin,
     register: handleRegister,
+    updateProfile: handleUpdate,
     logout: handleLogout,
     refreshUserInfo,
     clearError,

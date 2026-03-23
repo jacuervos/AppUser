@@ -16,6 +16,7 @@ export interface UserInfo {
   address: string | null;
   identification: string;
   photo: string | null;
+  points: number;
   rol: {
     id: number;
     name: string;
@@ -99,3 +100,18 @@ export interface RegisterResponse {
   message: string;
 }
 
+// Types for register credentials
+export interface UpdateCredentials {
+  email: string;
+  name: string;
+  phone: string;
+  images: string;
+  identification: string;
+}
+
+// Types for API responses
+export interface UserUpdateResponse {
+  code: number;
+  message: string;
+  user: UserInfo;
+}

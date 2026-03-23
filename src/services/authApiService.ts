@@ -11,18 +11,19 @@ import {
   ResetPasswordRequest,
   ResetPasswordResponse,
   RegisterCredentials,
-  RegisterResponse,
+  RegisterResponse, UpdateCredentials, UserUpdateResponse,
 } from '../types/auth.types';
 
 class AuthApiService {
-  private api: AxiosInstance;
-  private baseURL: string;
+  private authApi: AxiosInstance;
+  private userApi: AxiosInstance;
 
   constructor() {
-    this.baseURL = 'https://ms-auth-eha5d8bchthmdtd7.centralus-01.azurewebsites.net/api';
+    const authURL = 'https://ms-auth-eha5d8bchthmdtd7.centralus-01.azurewebsites.net/api';
+    const userURL = 'https://ms-user-ezcndjd8cefgazc6.centralus-01.azurewebsites.net/api';
 
-    this.api = axios.create({
-      baseURL: this.baseURL,
+    this.authApi = axios.create({
+      baseURL: authURL,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -30,36 +31,48 @@ class AuthApiService {
       timeout: 10000,
     });
 
-    // Interceptor to add token to requests
-    this.api.interceptors.request.use(
-      async (config) => {
-        // NO agregar token en login
-        if (config.url?.includes('/login')) {
-          console.log('Login request - skipping token');
-          return config;
-        }
-
-        const token = await AsyncStorage.getItem('access_token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
+    this.userApi = axios.create({
+      baseURL: userURL,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
-      (error) => {
-        return Promise.reject(error);
-      }
+      timeout: 10000,
+    });
+
+    this.setupInterceptors(this.authApi);
+    this.setupInterceptors(this.userApi);
+
+  }
+
+  /**
+   * Interceptors
+   */
+  private setupInterceptors(apiInstance: AxiosInstance) {
+    apiInstance.interceptors.request.use(
+        async (config) => {
+          if (config.url?.includes('/login')) {
+            return config;
+          }
+
+          const token = await AsyncStorage.getItem('access_token');
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
+
+          return config;
+        },
+        (error) => Promise.reject(error)
     );
 
-    // Interceptor to handle responses and errors
-    this.api.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        if (error.response?.status === 401) {
-          // Token expired or invalid, clear storage
-          await AsyncStorage.multiRemove(['access_token', 'user_info']);
+    apiInstance.interceptors.response.use(
+        (response) => response,
+        async (error) => {
+          if (error.response?.status === 401) {
+            await AsyncStorage.multiRemove(['access_token', 'user_info']);
+          }
+          return Promise.reject(error);
         }
-        return Promise.reject(error);
-      }
     );
   }
 
@@ -83,7 +96,7 @@ class AuthApiService {
         type: 'image/png',
         name: `image_${credentials.name.replace(/\s+/g, '_')}_${credentials.identification}.png`,
       });
-      const response: AxiosResponse<RegisterResponse> = await this.api.post(
+      const response: AxiosResponse<RegisterResponse> = await this.authApi.post(
           '/register_user',
           formData,
           {
@@ -105,29 +118,49 @@ class AuthApiService {
    */
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
-      console.log('=== LOGIN DEBUG ===');
-      console.log('Base URL:', this.baseURL);
-      console.log('Full URL:', `${this.baseURL}/login`);
-      console.log('Credentials:', { email: credentials.email, password: credentials.password});
 
-      const response: AxiosResponse<LoginResponse> = await this.api.post('/login', credentials);
-
-      console.log('Response status:', response.status);
-      console.log('Response data:', response.data);
+      const response: AxiosResponse<LoginResponse> = await this.authApi.post('/login', credentials);
 
       // Save token to AsyncStorage
       if (response.data.success && response.data.data.access_token) {
         await AsyncStorage.setItem('access_token', response.data.data.access_token);
-        console.log('Token guardado exitosamente');
       }
 
       return response.data;
     } catch (error: any) {
-      console.error('=== LOGIN ERROR ===');
-      console.error('Error status:', error.response?.status);
-      console.error('Error data:', error.response?.data);
-      console.error('Request URL:', error.config?.url);
-      console.error('Request headers:', error.config?.headers);
+      throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Update user with diferents params
+   * @param credentials - Name, phone, photo
+   * @param id
+   * @returns Update response with info user
+   */
+  async update(credentials: UpdateCredentials, id: number): Promise<UserUpdateResponse> {
+    try {
+      const formData = new FormData();
+      formData.append('name', credentials.name);
+      formData.append('phone', credentials.phone);
+      if(credentials?.images){
+        formData.append('images', {
+          uri: credentials.images,
+          type: 'image/png',
+          name: `image_${credentials.name.replace(/\s+/g, '_')}_${credentials.identification}.png`,
+        });
+      }
+      const response: AxiosResponse<UserUpdateResponse> = await this.userApi.patch(
+          `/user/${id}`,
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+      );
+      return response.data;
+    } catch (error: any) {
       throw this.handleError(error);
     }
   }
@@ -138,7 +171,7 @@ class AuthApiService {
    */
   async getUserInfo(): Promise<UserInfoResponse> {
     try {
-      const response: AxiosResponse<UserInfoResponse> = await this.api.get('/auth_me');
+      const response: AxiosResponse<UserInfoResponse> = await this.authApi.get('/auth_me');
 
       // Save user info to AsyncStorage
       if (response.data.success && response.data.data) {
@@ -226,12 +259,12 @@ class AuthApiService {
 
   /**
    * Send forgot password email
-   * @param email - User email
    * @returns Response indicating if email was sent
+   * @param request
    */
   async forgotPassword(request: ForgotPasswordRequest): Promise<ForgotPasswordResponse> {
     try {
-      const response: AxiosResponse<ForgotPasswordResponse> = await this.api.post('/forgot-password', request);
+      const response: AxiosResponse<ForgotPasswordResponse> = await this.authApi.post('/forgot-password', request);
       return response.data;
     } catch (error) {
       console.error('Forgot password error:', error);
@@ -246,7 +279,7 @@ class AuthApiService {
    */
   async validateResetToken(request: ValidateTokenRequest): Promise<ValidateTokenResponse> {
     try {
-      const response: AxiosResponse<ValidateTokenResponse> = await this.api.post('/validate-reset-token', request);
+      const response: AxiosResponse<ValidateTokenResponse> = await this.authApi.post('/validate-reset-token', request);
       return response.data;
     } catch (error) {
       console.error('Validate token error:', error);
@@ -261,7 +294,7 @@ class AuthApiService {
    */
   async resetPassword(request: ResetPasswordRequest): Promise<ResetPasswordResponse> {
     try {
-      const response: AxiosResponse<ResetPasswordResponse> = await this.api.post('/reset-password', request);
+      const response: AxiosResponse<ResetPasswordResponse> = await this.authApi.post('/reset-password', request);
       return response.data;
     } catch (error) {
       console.error('Reset password error:', error);

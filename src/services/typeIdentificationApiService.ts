@@ -23,7 +23,6 @@ class TypeIdentificationApiService {
       async config => {
         // NO agregar token en login
         if (config.url?.includes('/login')) {
-          console.log('Login request - skipping token');
           return config;
         }
 

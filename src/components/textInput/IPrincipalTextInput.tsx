@@ -11,4 +11,5 @@ export interface IPrincipalTextInput {
     security?: boolean | undefined;
     keyboard: KeyboardTypeOptions | undefined;
     error: boolean | undefined;
+    disabled?: boolean;
   }

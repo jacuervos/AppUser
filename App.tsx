@@ -6,6 +6,7 @@
  */
 
 import React, {Fragment} from 'react';
+import Toast from 'react-native-toast-message';
 import {StatusBar, SafeAreaView} from 'react-native';
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
@@ -21,6 +22,7 @@ const App = () => {
           <StatusBar animated={true} backgroundColor={colors.primary} />
           <BottomSheetModalProvider>
             <Navigation />
+            <Toast />
           </BottomSheetModalProvider>
         </SafeAreaView>
       </GestureHandlerRootView>

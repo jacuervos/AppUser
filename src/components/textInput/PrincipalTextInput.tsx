@@ -13,6 +13,7 @@ export const PrincipalTextInput: React.FC<IPrincipalTextInput> = ({
   security,
   keyboard,
   error,
+  disabled,
 }) => {
   return (
     <TextInput
@@ -32,6 +33,7 @@ export const PrincipalTextInput: React.FC<IPrincipalTextInput> = ({
       textColor={colors.text}
       secureTextEntry={security}
       error={error}
+      disabled={disabled}
     />
   );
 };

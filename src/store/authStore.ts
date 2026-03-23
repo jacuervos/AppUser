@@ -1,13 +1,14 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AuthState, LoginCredentials, RegisterCredentials } from '../types/auth.types';
+import {AuthState, LoginCredentials, RegisterCredentials, UpdateCredentials} from '../types/auth.types';
 import { authApiService } from '../services/authApiService';
 
 interface AuthActions {
   // Authentication actions
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
+  updateProfile: (credentials: UpdateCredentials, id: number) => Promise<void>;
   logout: () => Promise<void>;
   getUserInfo: () => Promise<void>;
 
@@ -134,6 +135,29 @@ const useAuthStore = create<AuthStore>()(
         }
       },
 
+      updateProfile: async (credentials: UpdateCredentials, id: number) => {
+        try {
+          set({ isLoading: true, error: null });
+
+          const response = await authApiService.update(credentials, id);
+          if (response.code === 200) {
+            set({
+              userInfo: response.user,
+              isLoading: false,
+              error: null,
+            });
+          } else {
+            throw new Error(response.message || 'Error la actualización');
+          }
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Error de conexión';
+          set({
+            isLoading: false,
+            error: errorMessage,
+          });
+          throw error;
+        }
+      },
       logout: async () => {
         try {
           set({ isLoading: true, error: null });

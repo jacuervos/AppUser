@@ -17,7 +17,7 @@ interface TabBarProps {
   navigation: any;
 }
 
-const CustomTabBar = ({state, descriptors, navigation}: TabBarProps) => {
+const CustomTabBar = ({state, navigation}: TabBarProps) => {
   const getIconName = (routeName: string) => {
     switch (routeName) {
       case 'Home':
@@ -26,7 +26,7 @@ const CustomTabBar = ({state, descriptors, navigation}: TabBarProps) => {
         return 'history';
       case 'Circular':
         return 'circle';
-      case 'Incentivos':
+      case 'Niveles':
         return 'gift';
       case 'Account':
         return 'user';
@@ -43,8 +43,8 @@ const CustomTabBar = ({state, descriptors, navigation}: TabBarProps) => {
         return 'Historial';
       case 'Circular':
         return 'Circular';
-      case 'Incentivos':
-        return 'Incentivos';
+      case 'Niveles':
+        return 'Niveles';
       case 'Account':
         return 'Perfil';
       default:
@@ -66,7 +66,7 @@ const CustomTabBar = ({state, descriptors, navigation}: TabBarProps) => {
       <View style={styles.tabContainer}>
         {/* Left side buttons */}
         <View style={styles.leftSide}>
-          {leftRoutes.map((route: any, index: number) => {
+          {leftRoutes.map((route: any) => {
             const label = getLabel(route.name);
             const iconName = getIconName(route.name);
             const isFocused = state.index === state.routes.findIndex((r: any) => r.key === route.key);
@@ -128,7 +128,7 @@ const CustomTabBar = ({state, descriptors, navigation}: TabBarProps) => {
 
         {/* Right side buttons */}
         <View style={styles.rightSide}>
-          {rightRoutes.map((route: any, index: number) => {
+          {rightRoutes.map((route: any) => {
             const label = getLabel(route.name);
             const iconName = getIconName(route.name);
             const isFocused = state.index === state.routes.findIndex((r: any) => r.key === route.key);

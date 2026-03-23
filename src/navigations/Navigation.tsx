@@ -4,12 +4,13 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import InitView from '../screens/InitView/InitView';
 import TabComponent from './Tab';
 import {Account} from '../screens/Account/Account';
-import Register from '../screens/Register/Register.tsx';
+import Register from '../screens/Register/Register';
 import ForgotPassword from '../screens/ForgotPassword/ForgotPassword';
 import ResetPassword from '../screens/ResetPassword/ResetPassword';
 import BlogDetail from '../screens/BlogDetail';
 import BlogsList from '../screens/BlogsList';
 import TipsDetail from '../screens/TipsDetail';
+import Profile from "../screens/Profile/Profile";
 import { colors } from '../utils/constants';
 
 const Stack = createNativeStackNavigator();
@@ -41,6 +42,7 @@ const Navigation = () => {
                 <Stack.Screen options={{ headerShown: true }} name="BlogDetail" component={BlogDetail} />
                 <Stack.Screen options={{ headerShown: true }} name="BlogsList" component={BlogsList} />
                 <Stack.Screen options={{ headerShown: true }} name="TipsDetail" component={TipsDetail} />
+                <Stack.Screen options={{ headerShown: false }} name="Profile" component={Profile} />
             </Stack.Navigator>
         </NavigationContainer>
     )

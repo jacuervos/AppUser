@@ -7,43 +7,44 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
   Linking,
   Alert,
-  ScrollView,
+  ScrollView, Image,
 } from 'react-native';
-import React, {ReactElement, useState} from 'react';
+import React, {ReactElement} from 'react';
 import {colors, fontFamily} from '../../utils/constants';
 import {useAuth} from '../../hooks/useAuth';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import {useNavigation} from "@react-navigation/native";
+import {NativeStackNavigationProp} from "@react-navigation/native-stack";
+import {RootStackParamList} from "../../types/navigation.ts";
 
 /**
  * @component Account View
  * @return {ReactElement} - React component
  */
 export const Account = (): ReactElement => {
+  const navigation =
+      useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
   const {userInfo, logout} = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editText, setEditText] = useState('');
 
   // Datos del usuario con valores por defecto
   const userData = {
     name: userInfo?.name || 'Usuario',
     phone: userInfo?.phone || 'No disponible',
     document: userInfo?.identification || 'No disponible',
-    points: '25', // Ejemplo de puntos
+    email: userInfo?.email || 'No disponible',
+    points: userInfo?.points || 0,
+    image: userInfo?.photo || ''
   };
 
   const handleEdit = () => {
-    setIsEditing(!isEditing);
-    if (isEditing) {
-      // Aquí podrías guardar los cambios
-      Alert.alert('Información', 'Cambios guardados exitosamente');
-    }
+    navigation.navigate('Profile');
   };
 
   const handleWhatsApp = () => {
-    const phoneNumber = userData.phone.replaceAll(/\D/g, '');
+    const phoneNumber = '573178874640'
     const message = `Hola, soy ${userData.name}. Me gustaría obtener más información.`;
     const whatsappUrl = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
     
@@ -95,7 +96,15 @@ export const Account = (): ReactElement => {
         {/* Avatar con puntos */}
         <View style={styles.avatarContainer}>
         <View style={styles.avatar}>
-          <Icon name="user" size={40} color={colors.primary} />
+          {userData.image === '' ?
+              <Icon name="user" size={40} color={colors.primary} />
+              :
+              <Image
+                  source={{uri: userData.image}}
+                  style={styles.image}
+              />
+          }
+
         </View>
         <View style={styles.pointsContainer}>
           <Icon name="star" size={16} color="#FFD700" />
@@ -117,29 +126,21 @@ export const Account = (): ReactElement => {
         </View>
 
         <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Correo electrónico</Text>
+          <Text style={styles.infoValue}>{userData.email}</Text>
+        </View>
+
+        <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Documento</Text>
           <Text style={styles.infoValue}>{userData.document}</Text>
         </View>
       </View>
 
-      {/* Input para editar información */}
-      <View style={styles.editSection}>
-        <Text style={styles.editLabel}>Text input para editar información</Text>
-        <TextInput
-          style={[styles.textInput, isEditing && styles.textInputActive]}
-          placeholder="Escribe aquí para editar información..."
-          value={editText}
-          onChangeText={setEditText}
-          editable={isEditing}
-          multiline
-        />
-      </View>
-
       {/* Botón Editar */}
       <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
-        <Icon name={isEditing ? "save" : "edit"} size={16} color={colors.white} />
+        <Icon name={"edit"} size={16} color={colors.white} />
         <Text style={styles.editButtonText}>
-          {isEditing ? 'Guardar' : 'Editar'}
+          {'Editar Perfil'}
         </Text>
       </TouchableOpacity>
 
@@ -186,6 +187,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  image: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     borderWidth: 2,
     borderColor: colors.primary,
   },
