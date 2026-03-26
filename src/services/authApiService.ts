@@ -264,7 +264,7 @@ class AuthApiService {
    */
   async forgotPassword(request: ForgotPasswordRequest): Promise<ForgotPasswordResponse> {
     try {
-      const response: AxiosResponse<ForgotPasswordResponse> = await this.authApi.post('/forgot-password', request);
+      const response: AxiosResponse<ForgotPasswordResponse> = await this.authApi.post('/send_code', request);
       return response.data;
     } catch (error) {
       console.error('Forgot password error:', error);
@@ -279,7 +279,10 @@ class AuthApiService {
    */
   async validateResetToken(request: ValidateTokenRequest): Promise<ValidateTokenResponse> {
     try {
-      const response: AxiosResponse<ValidateTokenResponse> = await this.authApi.post('/validate-reset-token', request);
+      const values = {
+        code: request.token,
+      }
+      const response: AxiosResponse<ValidateTokenResponse> = await this.authApi.post('/validate_code', values);
       return response.data;
     } catch (error) {
       console.error('Validate token error:', error);
@@ -294,7 +297,11 @@ class AuthApiService {
    */
   async resetPassword(request: ResetPasswordRequest): Promise<ResetPasswordResponse> {
     try {
-      const response: AxiosResponse<ResetPasswordResponse> = await this.authApi.post('/reset-password', request);
+      const values = {
+        code: request.token,
+        ...request,
+      }
+      const response: AxiosResponse<ResetPasswordResponse> = await this.authApi.post('/change_password', values);
       return response.data;
     } catch (error) {
       console.error('Reset password error:', error);
