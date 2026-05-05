@@ -1,7 +1,3 @@
-/*!
- * Copyright (c) Laika LLC. All rights reserved.
- */
-
 export type RootStackParamList = {
   InitView: undefined;
   Register: undefined;

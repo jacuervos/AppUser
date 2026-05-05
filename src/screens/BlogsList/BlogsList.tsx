@@ -1,7 +1,3 @@
-/*!
- * Copyright (c) Laika LLC. All rights reserved.
- */
-
 import React, {ReactElement, useLayoutEffect, useState} from 'react';
 import {
   View,
@@ -216,7 +212,7 @@ const BlogsList = (): ReactElement => {
 
               {/* Tags */}
               <View style={blogsListStyles.tagsContainer}>
-                {blog.tags?.slice(0, 3).map((tag: any, index: number) => (
+                {blog.tags?.slice(0, 3).map((tag: any) => (
                   <View key={`${blog.id}-${tag}`} style={blogsListStyles.tag}>
                     <Text style={blogsListStyles.tagText}>{tag}</Text>
                   </View>

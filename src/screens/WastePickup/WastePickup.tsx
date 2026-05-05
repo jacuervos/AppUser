@@ -1,7 +1,3 @@
-/*!
- * Copyright (c) Laika LLC. All rights reserved.
- */
-
 import React, {ReactElement, useEffect, useState} from 'react';
 import {
   View,
@@ -13,7 +9,8 @@ import {
   Dimensions,
   ActivityIndicator,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome5';
+import Icon from 'react-native-vector-icons/FontAwesome6';
+import IconFont from 'react-native-vector-icons/FontAwesome5';
 import {Calendar, DateData} from 'react-native-calendars';
 import {colors, fontFamily, shadows} from '../../utils/constants';
 
@@ -227,7 +224,7 @@ const WastePickupScreen = (): ReactElement => {
         
         {/* Add Item Button */}
         <TouchableOpacity style={styles.addItemButton} onPress={addWasteItem}>
-          <Icon name="plus-circle" size={20} color={colors.white} />
+          <IconFont name="plus-circle" size={20} color={colors.white} />
           <Text style={styles.addItemButtonText}>Agregar</Text>
         </TouchableOpacity>
       </View>

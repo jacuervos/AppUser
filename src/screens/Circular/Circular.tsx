@@ -1,7 +1,3 @@
-/*!
- * Copyright (c) Laika LLC. All rights reserved.
- */
-
 import React, {ReactElement} from 'react';
 import {WastePickup} from '../WastePickup';
 

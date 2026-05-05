@@ -1,12 +1,8 @@
-/*!
- * Copyright (c) Laika LLC. All rights reserved.
- */
-
-import {View, Text, TouchableOpacity, ScrollView, Image} from 'react-native';
+import {View, Text, TouchableOpacity, ScrollView} from 'react-native';
 import React, {ReactElement, useState} from 'react';
 import CardHistoryStyles from './styles';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-import {colors, fontFamily} from '../../../utils/constants';
+import {colors} from '../../../utils/constants';
 
 // Tipos de datos
 interface OrderItem {

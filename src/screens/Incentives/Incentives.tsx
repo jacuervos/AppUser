@@ -1,7 +1,3 @@
-/*!
- * Copyright (c) Laika LLC. All rights reserved.
- */
-
 import React, {ReactElement} from 'react';
 import {
   View,
@@ -11,17 +7,8 @@ import {
   Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-import {useNavigation} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {colors} from '../../utils/constants';
 import IncentivesStyles from './styles';
-
-type RootStackParamList = {
-  Account: undefined;
-  History: undefined;
-  Home: undefined;
-  CreateOrder: undefined;
-};
 
 interface Incentive {
   id: string;
@@ -90,7 +77,6 @@ const incentivesData: Incentive[] = [
  * @return {ReactElement} - React component
  */
 export const Incentives = (): ReactElement => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const handleIncentivePress = (incentive: Incentive) => {
     if (!incentive.available) {

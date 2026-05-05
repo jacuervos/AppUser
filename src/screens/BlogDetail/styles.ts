@@ -1,11 +1,7 @@
-/*!
- * Copyright (c) Laika LLC. All rights reserved.
- */
-
 import {StyleSheet, Dimensions} from 'react-native';
 import {colors} from '../../utils/constants';
 
-const {width, height} = Dimensions.get('window');
+const {height} = Dimensions.get('window');
 
 const blogDetailStyles = StyleSheet.create({
   container: {

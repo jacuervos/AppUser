@@ -27,7 +27,7 @@ const CustomTabBar = ({state, navigation}: TabBarProps) => {
       case 'Circular':
         return 'circle';
       case 'Niveles':
-        return 'gift';
+        return 'level-up-alt';
       case 'Account':
         return 'user';
       default:
