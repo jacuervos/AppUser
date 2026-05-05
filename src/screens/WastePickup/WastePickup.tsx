@@ -2,7 +2,7 @@
  * Copyright (c) Laika LLC. All rights reserved.
  */
 
-import React, {ReactElement, useState} from 'react';
+import React, {ReactElement, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -11,18 +11,17 @@ import {
   ScrollView,
   Alert,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import {Calendar, DateData} from 'react-native-calendars';
 import {colors, fontFamily, shadows} from '../../utils/constants';
 
 const {width} = Dimensions.get('window');
 
-interface WasteType {
-  id: string;
-  name: string;
-  icon: string;
-  selected: boolean;
-}
+import useWasteTypeStore from '../../store/wasteTypeStore';
+import useOrderStore from '../../store/orderStore';
+import { WasteType } from '../../types/wasteType.types';
 
 interface AddedWasteItem {
   id: string;
@@ -35,23 +34,25 @@ interface AddedWasteItem {
  * @return {ReactElement} - React component
  */
 const WastePickupScreen = (): ReactElement => {
-  const [wasteTypes, setWasteTypes] = useState<WasteType[]>([
-    {id: '1', name: 'Cartón', icon: 'box', selected: false},
-    {id: '2', name: 'Plástico', icon: 'wine-bottle', selected: false},
-    {id: '3', name: 'Papel', icon: 'file-alt', selected: false},
-    {id: '4', name: 'No está organizado', icon: 'trash', selected: false},
-  ]);
+  const { wasteTypes, error: wasteTypesError, getWasteTypes } = useWasteTypeStore();
+  const { loading: orderLoading, submitOrder } = useOrderStore();
+
+  useEffect(() => {
+    getWasteTypes();
+  }, [getWasteTypes]);
 
   const [weight, setWeight] = useState<number>(0);
   const [addedWasteItems, setAddedWasteItems] = useState<AddedWasteItem[]>([]);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
+  const [selectedDate, setSelectedDate] = useState<string>('');
 
   const toggleWasteType = (id: string) => {
-    setWasteTypes(prev =>
-      prev.map(item =>
-        item.id === id ? {...item, selected: !item.selected} : item,
-      ),
-    );
+    // Usar el store para actualizar el estado localmente
+    useWasteTypeStore.setState(state => ({
+      wasteTypes: state.wasteTypes.map(item =>
+        item.id === id ? { ...item, selected: !item.selected } : item
+      )
+    }));
   };
 
   const incrementWeight = () => {
@@ -90,9 +91,10 @@ const WastePickupScreen = (): ReactElement => {
     }));
 
     setAddedWasteItems(prev => [...prev, ...newItems]);
-    
-    // Reset selections after adding
-    setWasteTypes(prev => prev.map(item => ({...item, selected: false})));
+    // Reset selections después de agregar
+    useWasteTypeStore.setState(state => ({
+      wasteTypes: state.wasteTypes.map(item => ({ ...item, selected: false }))
+    }));
     setWeight(0);
   };
 
@@ -100,34 +102,64 @@ const WastePickupScreen = (): ReactElement => {
     setAddedWasteItems(prev => prev.filter(item => item.id !== id));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (addedWasteItems.length === 0) {
-      Alert.alert('Error', 'Agrega al menos un elemento a la lista');
+      Alert.alert('Residuos requeridos', 'Agrega al menos un tipo de residuo a la lista antes de continuar.');
       return;
     }
 
-    const totalWeight = addedWasteItems.reduce((sum, item) => sum + item.weight, 0);
-    const itemsList = addedWasteItems.map(item => `${item.wasteType.name}: ${item.weight} kg`).join('\n');
+    if (!selectedDate) {
+      Alert.alert('Fecha requerida', 'Selecciona una fecha de recogida en el calendario antes de continuar.');
+      return;
+    }
 
-    Alert.alert(
-      'Datos guardados',
-      `Se ha guardado la solicitud de recogida:\n\n${itemsList}\n\nPeso total: ${totalWeight} kg`,
-      [
-        {
+    const orderPayload = {
+      latitude: 0,
+      longitude: 0,
+      date: selectedDate
+        ? `${selectedDate} 00:00:00`
+        : new Date().toISOString().slice(0, 19).replace('T', ' '),
+      state_id: 1,
+    };
+
+    const items = addedWasteItems.map(item => ({
+      type_waste_id: Number(item.wasteType.id),
+      weight: item.weight,
+      points: item.wasteType.points * item.weight,
+    }));
+
+    const success = await submitOrder(orderPayload, items);
+
+    if (success) {
+      const totalWeight = addedWasteItems.reduce((sum, item) => sum + item.weight, 0);
+      const itemsList = addedWasteItems.map(item => `${item.wasteType.name}: ${item.weight} kg`).join('\n');
+      Alert.alert(
+        'Solicitud guardada',
+        `Se ha guardado la solicitud de recogida:\n\n${itemsList}\n\nPeso total: ${totalWeight} kg`,
+        [{
           text: 'OK',
           onPress: () => {
-            // Reset form after saving
             setAddedWasteItems([]);
-            setWasteTypes(prev => prev.map(item => ({...item, selected: false})));
+            setSelectedDate('');
+            useWasteTypeStore.setState(state => ({
+              wasteTypes: state.wasteTypes.map((w: WasteType) => ({ ...w, selected: false })),
+            }));
             setWeight(0);
           },
-        },
-      ],
-    );
+        }],
+      );
+    } else {
+      Alert.alert('Error', 'No se pudo guardar la solicitud. Intenta nuevamente.');
+    }
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.wrapper}>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        scrollEnabled={!orderLoading}
+        pointerEvents={orderLoading ? 'none' : 'auto'}>
       <View style={styles.header}>
         <Text style={styles.title}>Solicitud de Recogida</Text>
         <Text style={styles.subtitle}>
@@ -138,35 +170,39 @@ const WastePickupScreen = (): ReactElement => {
       {/* Waste Types Selection */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Selecciona los tipos de residuos:</Text>
-        <View style={styles.wasteTypesContainer}>
-          {wasteTypes.map(waste => (
-            <TouchableOpacity
-              key={waste.id}
-              style={[
-                styles.wasteTypeCard,
-                waste.selected && styles.wasteTypeCardSelected,
-              ]}
-              onPress={() => toggleWasteType(waste.id)}>
-              <Icon
-                name={waste.icon}
-                size={24}
-                color={waste.selected ? colors.white : colors.primary}
-              />
-              <Text
+        {wasteTypesError ? (
+          <Text style={{ color: colors.error, marginBottom: 12 }}>{wasteTypesError}</Text>
+        ) : (
+          <View style={styles.wasteTypesContainer}>
+            {wasteTypes.map(waste => (
+              <TouchableOpacity
+                key={waste.id}
                 style={[
-                  styles.wasteTypeName,
-                  waste.selected && styles.wasteTypeNameSelected,
-                ]}>
-                {waste.name}
-              </Text>
-              {waste.selected && (
-                <View style={styles.checkmark}>
-                  <Icon name="check" size={16} color={colors.white} />
-                </View>
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
+                  styles.wasteTypeCard,
+                  waste.selected && styles.wasteTypeCardSelected,
+                ]}
+                onPress={() => toggleWasteType(waste.id)}>
+                <Icon
+                  name={waste.icon}
+                  size={24}
+                  color={waste.selected ? colors.white : colors.primary}
+                />
+                <Text
+                  style={[
+                    styles.wasteTypeName,
+                    waste.selected && styles.wasteTypeNameSelected,
+                  ]}>
+                  {waste.name}
+                </Text>
+                {waste.selected && (
+                  <View style={styles.checkmark}>
+                    <Icon name="check" size={16} color={colors.white} />
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
 
       {/* Weight Selection */}
@@ -243,17 +279,55 @@ const WastePickupScreen = (): ReactElement => {
           style={styles.calendarButton}
           onPress={() => setShowCalendar(!showCalendar)}>
           <Icon name="calendar-alt" size={20} color={colors.primary} />
-          <Text style={styles.calendarButtonText}>Calendario</Text>
+          <Text style={styles.calendarButtonText}>
+            {selectedDate ? `Fecha: ${selectedDate}` : 'Seleccionar fecha'}
+          </Text>
         </TouchableOpacity>
+
+        {showCalendar && (
+          <View style={styles.calendarContainer}>
+            <Calendar
+              onDayPress={(day: DateData) => {
+                setSelectedDate(day.dateString);
+                setShowCalendar(false);
+              }}
+              markedDates={
+                selectedDate
+                  ? {[selectedDate]: {selected: true, selectedColor: colors.primary}}
+                  : {}
+              }
+              minDate={new Date().toISOString().slice(0, 10)}
+              theme={{
+                todayTextColor: colors.primary,
+                arrowColor: colors.primary,
+                selectedDayBackgroundColor: colors.primary,
+                textDayFontFamily: fontFamily.fontFamilyRegular,
+                textMonthFontFamily: fontFamily.fontFamilySemiBold,
+                textDayHeaderFontFamily: fontFamily.fontFamilyMedium,
+              }}
+            />
+          </View>
+        )}
         
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Icon name="save" size={20} color={colors.white} />
-          <Text style={styles.submitButtonText}>Guardar Solicitud</Text>
+        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={orderLoading}>
+          <Icon name={orderLoading ? 'spinner' : 'save'} size={20} color={colors.white} />
+          <Text style={styles.submitButtonText}>{orderLoading ? 'Guardando...' : 'Guardar Solicitud'}</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.bottomSpacing} />
-    </ScrollView>
+      </ScrollView>
+
+      {/* Loading Overlay */}
+      {orderLoading && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingBox}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={styles.loadingText}>Guardando solicitud...</Text>
+          </View>
+        </View>
+      )}
+    </View>
   );
 };
 
@@ -262,6 +336,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     paddingTop: 50, // Add top padding for status bar
+  },
+  wrapper: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: 20,
@@ -408,6 +486,13 @@ const styles = StyleSheet.create({
     color: colors.primary,
     marginLeft: 8,
   },
+  calendarContainer: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.lightGray,
+    ...shadows.medium,
+  },
   submitButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -490,6 +575,28 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 120, // Space for the tab bar
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 99,
+  },
+  loadingBox: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    paddingVertical: 32,
+    paddingHorizontal: 40,
+    alignItems: 'center',
+    gap: 16,
+    ...shadows.medium,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontFamily: fontFamily.fontFamilySemiBold,
+    color: colors.text,
+    marginTop: 8,
   },
 });
 
