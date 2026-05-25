@@ -13,17 +13,22 @@ import Icon from 'react-native-vector-icons/FontAwesome6';
 import IconFont from 'react-native-vector-icons/FontAwesome5';
 import {Calendar, DateData} from 'react-native-calendars';
 import {colors, fontFamily, shadows} from '../../utils/constants';
-
-const {width} = Dimensions.get('window');
-
+import {getCurrentLocation} from "../../functions/Geolocation";
 import useWasteTypeStore from '../../store/wasteTypeStore';
 import useOrderStore from '../../store/orderStore';
 import { WasteType } from '../../types/wasteType.types';
+
+const {width} = Dimensions.get('window');
 
 interface AddedWasteItem {
   id: string;
   wasteType: WasteType;
   weight: number;
+}
+
+interface LocationCoords {
+  latitude: number;
+  longitude: number;
 }
 
 /**
@@ -42,6 +47,7 @@ const WastePickupScreen = (): ReactElement => {
   const [addedWasteItems, setAddedWasteItems] = useState<AddedWasteItem[]>([]);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>('');
+  const [location, setLocation] = useState<LocationCoords | null>(null);
 
   const toggleWasteType = (id: string) => {
     // Usar el store para actualizar el estado localmente
@@ -111,12 +117,11 @@ const WastePickupScreen = (): ReactElement => {
     }
 
     const orderPayload = {
-      latitude: 0,
-      longitude: 0,
+      latitude: location?.latitude ?? 0,
+      longitude: location?.longitude ?? 0,
       date: selectedDate
         ? `${selectedDate} 00:00:00`
         : new Date().toISOString().slice(0, 19).replace('T', ' '),
-      state_id: 1,
     };
 
     const items = addedWasteItems.map(item => ({
@@ -149,6 +154,24 @@ const WastePickupScreen = (): ReactElement => {
       Alert.alert('Error', 'No se pudo guardar la solicitud. Intenta nuevamente.');
     }
   };
+
+  useEffect(() => {
+    const requestLocation = async () => {
+      const currentLocation = await getCurrentLocation();
+
+      if (currentLocation) {
+        setLocation(currentLocation);
+
+      } else {
+        Alert.alert(
+            'Permiso requerido',
+            'Necesitamos acceso a tu ubicación para continuar.',
+        );
+      }
+    };
+
+    requestLocation();
+  }, []);
 
   return (
     <View style={styles.wrapper}>

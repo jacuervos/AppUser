@@ -1,7 +1,7 @@
 import { WasteType } from '../types/wasteType.types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const WASTE_API_URL = 'https://ms-waste-grdgd2heasd6dagx.centralus-01.azurewebsites.net/api';
+const WASTE_API_URL = 'https://ms-waste-grdgd2heasd6dagx.canadacentral-01.azurewebsites.net/api';
 
 const nameIcons = (name: string) => {
   switch (name){

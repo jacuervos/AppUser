@@ -2,7 +2,6 @@ export interface OrderPayload {
   latitude: number;
   longitude: number;
   date: string;
-  state_id: number;
 }
 
 export interface OrderResponse {

@@ -19,8 +19,8 @@ class AuthApiService {
   private userApi: AxiosInstance;
 
   constructor() {
-    const authURL = 'https://ms-auth-eha5d8bchthmdtd7.centralus-01.azurewebsites.net/api';
-    const userURL = 'https://ms-user-ezcndjd8cefgazc6.centralus-01.azurewebsites.net/api';
+    const authURL = 'https://ms-auth-eha5d8bchthmdtd7.canadacentral-01.azurewebsites.net/api';
+    const userURL = 'https://ms-user-ezcndjd8cefgazc6.canadacentral-01.azurewebsites.net/api';
 
     this.authApi = axios.create({
       baseURL: authURL,

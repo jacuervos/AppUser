@@ -5,7 +5,7 @@ import {
   OrderTypeWastePayload,
 } from '../types/order.types';
 
-const ORDERS_API_URL = 'https://ms-order-ejh2bwafatarb7cx.centralus-01.azurewebsites.net/api';
+const ORDERS_API_URL = 'https://ms-order-ejh2bwafatarb7cx.canadacentral-01.azurewebsites.net/api';
 
 const getAuthHeaders = async () => {
   const token = await AsyncStorage.getItem('access_token');
