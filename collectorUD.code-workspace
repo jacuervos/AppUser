@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../collectorUD"
+		},
+		{
+			"path": "../AppRecicler"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {}
+}
