@@ -14,6 +14,7 @@ import { Header } from '../../components/header/Header';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, fontFamily, shadows } from '../../utils/constants';
+import { collectorTrackingApiService } from '../../services/collectorTrackingApiService';
 
 const { width, height } = Dimensions.get('window');
 
@@ -182,34 +183,16 @@ export const CollectorTracking = (): ReactElement => {
   // Obtener la ubicación del recolector
   const fetchCollectorLocation = async () => {
     try {
-      const response = await fetch('http://your-api-url/api/my-collector-location', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${/* get token from auth store */}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          setError('No hay recolector asignado en este momento');
-        } else {
-          setError('Error al obtener la ubicación del recolector');
-        }
-        setLoading(false);
-        return;
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        setTrackingData(data.data);
-        setError(null);
-        setLastUpdate(new Date());
+      const response = await collectorTrackingApiService.getMyCollectorLocation();
+      setTrackingData(response.data);
+      setError(null);
+      setLastUpdate(new Date());
+    } catch (err: any) {
+      if (err.statusCode === 404 || err.status === 404) {
+        setError('No hay recolector asignado en este momento');
       } else {
-        setError(data.message || 'Error desconocido');
+        setError(err.message || 'Error al obtener la ubicación del recolector');
       }
-    } catch (err) {
-      setError('Error de conexión. Verifica tu internet.');
       console.error('Error fetching collector location:', err);
     } finally {
       setLoading(false);

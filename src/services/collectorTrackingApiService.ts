@@ -66,7 +66,7 @@ class CollectorTrackingApiService {
    */
   async getMyCollectorLocation(): Promise<TrackingResponse> {
     try {
-      const response = await this.api.get<TrackingResponse>('/my-collector-location');
+      const response = await this.api.get<TrackingResponse>('/collector/location');
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;
@@ -78,7 +78,7 @@ class CollectorTrackingApiService {
    */
   async getActiveOrders(): Promise<ActiveOrdersResponse> {
     try {
-      const response = await this.api.get<ActiveOrdersResponse>('/my-active-orders');
+      const response = await this.api.get<ActiveOrdersResponse>('/orders/active');
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;
