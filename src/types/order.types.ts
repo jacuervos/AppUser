@@ -25,6 +25,7 @@ export interface OrderTypeWaste {
   order_id: number;
   type_waste_id: number;
   type_waste: string | null;
+  type_waste_name: string;
   weight: number;
   points: number;
 }
@@ -44,4 +45,11 @@ export interface OrderHistoryItem {
   collector: Record<string, any> | null;
   type_waste: OrderTypeWaste[];
   state: OrderState;
+  status: string;
+  items: OrderTypeWaste[];
+  pickup_location: {
+    latitude: string,
+    longitude: string,
+  };
+  address: string;
 }

@@ -6,17 +6,20 @@ interface OrderStore {
   loading: boolean;
   error: string | null;
   myOrders: OrderHistoryItem[];
+  orderActive: OrderHistoryItem[] | [];
   submitOrder: (
     orderPayload: OrderPayload,
     items: Omit<OrderTypeWastePayload, 'order_id'>[]
   ) => Promise<boolean>;
   fetchMyOrders: () => Promise<void>;
+  fetchMyOrderActive: () => Promise<void>;
 }
 
 const useOrderStore = create<OrderStore>(set => ({
   loading: false,
   error: null,
   myOrders: [],
+  orderActive: [],
 
   submitOrder: async (orderPayload, items) => {
     set({ loading: true, error: null });
@@ -42,6 +45,18 @@ const useOrderStore = create<OrderStore>(set => ({
       set({
         loading: false,
         error: error?.message || 'Error al obtener las órdenes',
+      });
+    }
+  },
+
+  fetchMyOrderActive: async () => {
+    set({  error: null });
+    try {
+      const orders = await orderApiService.getMyOrderActive();
+      set({  orderActive: orders });
+    } catch (error: any) {
+      set({
+        error: error?.message || 'Error al obtener la órden',
       });
     }
   },

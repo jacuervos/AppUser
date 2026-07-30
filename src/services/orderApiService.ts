@@ -10,7 +10,6 @@ const ORDERS_API_URL = 'https://ms-order-ejh2bwafatarb7cx.canadacentral-01.azure
 
 const getAuthHeaders = async () => {
   const token = await AsyncStorage.getItem('access_token');
-  console.log('Retrieved token from AsyncStorage:', token);
   return {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -43,7 +42,20 @@ const orderApiService = {
       method: 'GET',
       headers,
     });
-    console.log('Response status:', response);
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Error al obtener las órdenes');
+    }
+    const data = await response.json();
+    return data.data;
+  },
+
+  getMyOrderActive: async (): Promise<OrderHistoryItem[]> => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${ORDERS_API_URL}/orders/active`, {
+      method: 'GET',
+      headers,
+    });
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.message || 'Error al obtener las órdenes');

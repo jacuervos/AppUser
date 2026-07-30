@@ -11,6 +11,7 @@ import BlogDetail from '../screens/BlogDetail';
 import BlogsList from '../screens/BlogsList';
 import TipsDetail from '../screens/TipsDetail';
 import Profile from "../screens/Profile/Profile";
+import {MapScreen} from "../screens/Map/Map.tsx";
 import { colors } from '../utils/constants';
 
 const Stack = createNativeStackNavigator();
@@ -43,6 +44,7 @@ const Navigation = () => {
                 <Stack.Screen options={{ headerShown: true }} name="BlogsList" component={BlogsList} />
                 <Stack.Screen options={{ headerShown: true }} name="TipsDetail" component={TipsDetail} />
                 <Stack.Screen options={{ headerShown: false }} name="Profile" component={Profile} />
+                <Stack.Screen options={{ headerShown: false }} name="Map" component={MapScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     )

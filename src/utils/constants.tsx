@@ -27,10 +27,19 @@ export const colors = {
     darkGray: '#424242',
     // Fondo principal con tinte verde muy sutil
     background: '#FAFFFE',
+    border: '#f0f0f0',
+    textSecondary: '#757575'
 }
 
 // Estilos reutilizables para sombras
 export const shadows = {
+    sm: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.18,
+        shadowRadius: 1.0,
+        elevation: 1,
+    },
     small: {
         shadowColor: colors.primary,
         shadowOffset: { width: 0, height: 2 },
@@ -38,12 +47,26 @@ export const shadows = {
         shadowRadius: 3,
         elevation: 3,
     },
+    md: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
     medium: {
         shadowColor: colors.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
         shadowRadius: 6,
         elevation: 6,
+    },
+    lg: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4.65,
+        elevation: 8,
     },
     large: {
         shadowColor: colors.primary,
