@@ -10,6 +10,11 @@ const headerStyles = StyleSheet.create({
     alignItems:'center',
     flexDirection:'row'
   },
+  containerIcon: {
+    marginRight: -60,
+    padding: 10,
+    marginLeft: -10
+  },
   title: {
     fontFamily: fontFamily.fontFamilyRegular,
     color: colors.white,

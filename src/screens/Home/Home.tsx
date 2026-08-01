@@ -14,9 +14,9 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useAuth} from '../../hooks/useAuth';
 import {colors} from '../../utils/constants';
 import {RootStackParamList} from '../../types/navigation';
-import homeStyles from './styles';
 import useOrderStore from "../../store/orderStore.ts";
 import {OrderHistoryItem} from "../../types/order.types.ts";
+import homeStyles from './styles';
 
 type HomeNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -27,7 +27,7 @@ type HomeNavigationProp = NativeStackNavigationProp<RootStackParamList>;
  */
 const Home = (): ReactElement => {
   const {userInfo} = useAuth();
-  const {orderActive, fetchMyOrderActive} = useOrderStore();
+  const {orderActive, fetchMyOrderActive, getInfoOrderMap} = useOrderStore();
 
   const { GeocoderModule } = NativeModules;
 
@@ -71,8 +71,10 @@ const Home = (): ReactElement => {
           `¡Espera!`,
           'No puedes ver aún la ubicación del recolector'
       );
+    }else {
+      navigation.navigate('Map' as never);
+      getInfoOrderMap(order);
     }
-
   };
 
   const loadAddresses = async () => {
@@ -133,48 +135,52 @@ const Home = (): ReactElement => {
         style={homeStyles.content} 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={homeStyles.scrollContent}>
-        
-        {/* SECCIÓN ÓRDENES EN CURSO - Lo más importante */}
-        <View style={homeStyles.section}>
-          <View style={homeStyles.sectionHeader}>
-            <Icon name="clock" size={20} color={colors.primary} />
-            <Text style={homeStyles.sectionTitle}>Órdenes en Curso</Text>
-          </View>
-          
-          {ordersWithAddress.map((order) => {
-            const materialNames = order.items.map(item => item.type_waste_name).join(', ');
-            const totalPoints = order.items.reduce(
-                (total, item) => total + item.points,
-                0,
-            );
-            return <TouchableOpacity
-                key={order.id}
-                style={homeStyles.orderCard}
-                onPress={() => handleOrderPress(order)}>
-              <View style={homeStyles.orderHeader}>
-                <Text style={homeStyles.orderNumber}>{order.id}</Text>
-                <View style={[homeStyles.statusBadge, {
-                  backgroundColor: colors.primary
-                }]}>
-                  <Text style={homeStyles.orderStatusText}>{order.status}</Text>
-                </View>
+
+        {ordersWithAddress.length > 0 && (
+          <>
+            {/* SECCIÓN ÓRDENES EN CURSO - Lo más importante */}
+            <View style={homeStyles.section}>
+              <View style={homeStyles.sectionHeader}>
+                <Icon name="clock" size={20} color={colors.primary} />
+                <Text style={homeStyles.sectionTitle}>Órdenes en Curso</Text>
               </View>
 
-              <View style={homeStyles.orderInfo}>
-                <Icon name="map-marker-alt" size={12} color={colors.gray} />
-                <Text style={homeStyles.orderLocation}>{order.address}</Text>
-              </View>
-              <View style={homeStyles.orderDetails}>
-                <Text style={homeStyles.orderMaterials}>
-                  Materiales: {materialNames}
-                </Text>
-                <View style={homeStyles.orderBottom}>
-                  <Text style={homeStyles.orderPoints}>🎯 {totalPoints} pts</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          })}
-        </View>
+              {ordersWithAddress.map((order) => {
+                const materialNames = order.items.map(item => item.type_waste_name).join(', ');
+                const totalPoints = order.items.reduce(
+                    (total, item) => total + item.points,
+                    0,
+                );
+                return <TouchableOpacity
+                    key={order.id}
+                    style={homeStyles.orderCard}
+                    onPress={() => handleOrderPress(order)}>
+                  <View style={homeStyles.orderHeader}>
+                    <Text style={homeStyles.orderNumber}>{order.id}</Text>
+                    <View style={[homeStyles.statusBadge, {
+                      backgroundColor: colors.primary
+                    }]}>
+                      <Text style={homeStyles.orderStatusText}>{order.status}</Text>
+                    </View>
+                  </View>
+
+                  <View style={homeStyles.orderInfo}>
+                    <Icon name="map-marker-alt" size={12} color={colors.gray} />
+                    <Text style={homeStyles.orderLocation}>{order.address}</Text>
+                  </View>
+                  <View style={homeStyles.orderDetails}>
+                    <Text style={homeStyles.orderMaterials}>
+                      Materiales: {materialNames}
+                    </Text>
+                    <View style={homeStyles.orderBottom}>
+                      <Text style={homeStyles.orderPoints}>🎯 {totalPoints} pts</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              })}
+            </View>
+          </>
+        )}
 
         {/* SECCIÓN BLOGS */}
         <View style={homeStyles.section}>

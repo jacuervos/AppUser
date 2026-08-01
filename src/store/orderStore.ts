@@ -7,12 +7,14 @@ interface OrderStore {
   error: string | null;
   myOrders: OrderHistoryItem[];
   orderActive: OrderHistoryItem[] | [];
+  orderViewMap: OrderHistoryItem | null;
   submitOrder: (
     orderPayload: OrderPayload,
     items: Omit<OrderTypeWastePayload, 'order_id'>[]
   ) => Promise<boolean>;
   fetchMyOrders: () => Promise<void>;
   fetchMyOrderActive: () => Promise<void>;
+  getInfoOrderMap: (item:  OrderHistoryItem) => void;
 }
 
 const useOrderStore = create<OrderStore>(set => ({
@@ -20,6 +22,7 @@ const useOrderStore = create<OrderStore>(set => ({
   error: null,
   myOrders: [],
   orderActive: [],
+  orderViewMap: null,
 
   submitOrder: async (orderPayload, items) => {
     set({ loading: true, error: null });
@@ -60,6 +63,11 @@ const useOrderStore = create<OrderStore>(set => ({
       });
     }
   },
+
+  getInfoOrderMap: (item: OrderHistoryItem)=> {
+  set({  orderViewMap: item });
+  },
+
 }));
 
 export default useOrderStore;

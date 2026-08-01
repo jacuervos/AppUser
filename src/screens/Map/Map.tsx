@@ -1,38 +1,19 @@
 import React, { ReactElement, useEffect, useState, useRef } from 'react';
 import {
   View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  ScrollView,
-  Modal,
+  StyleSheet, Alert,
 } from 'react-native';
 import * as MapLibreRN from '@maplibre/maplibre-react-native';
-const { MapView, Camera, ShapeSource, CircleLayer, LineLayer } = MapLibreRN;
-import Icon from 'react-native-vector-icons/FontAwesome6';
+const { MapView, Camera } = MapLibreRN;
 import { Header } from '../../components/header/Header';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, fontFamily, shadows } from '../../utils/constants';
-import { collectorPickupApiService } from '../../services/collectorPickupApiService';
+import {getCurrentLocation} from "../../functions/Geolocation.tsx";
+import {CircleLayer, ShapeSource} from "@maplibre/maplibre-react-native";
+import useOrderStore from "../../store/orderStore.ts";
 
-const { width } = Dimensions.get('window');
 const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
-
-interface PickupPoint {
-  id: number;
-  order_id: number;
-  latitude: number;
-  longitude: number;
-  address: string;
-  notes?: string;
-  completed_at: string | null;
-  user_name: string;
-  user_phone?: string;
-}
 
 interface LocationCoords {
   latitude: number;
@@ -287,7 +268,7 @@ const styles = StyleSheet.create({
 
 /**
  * @component MapScreen
- * HU-19: Visualización de puntos de recogida para el recolector
+ * HU-18: Visualización de recolector en el map
  * @return {ReactElement} - React component
  */
 export const MapScreen = (): ReactElement => {
@@ -299,163 +280,35 @@ export const MapScreen = (): ReactElement => {
     animationDuration: 1000,
   });
 
-  const [pickupPoints, setPickupPoints] = useState<PickupPoint[]>([]);
-  const [currentLocation, setCurrentLocation] = useState<LocationCoords | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedPoint, setSelectedPoint] = useState<PickupPoint | null>(null);
-  const [showDetails, setShowDetails] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const {orderViewMap} = useOrderStore();
 
-  // Obtener puntos de recogida
-  const fetchPickupPoints = async () => {
-    try {
-      const data = await collectorPickupApiService.getMyPickupPoints();
-      if (data.success) {
-        setPickupPoints(data.data.pickup_points);
-        setError(null);
-      } else {
-        setError('Error al cargar los puntos de recogida');
-      }
-    } catch (err) {
-      setError('Error de conexión. Verifica tu internet.');
-      console.error('Error fetching pickup points:', err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+  const [location, setLocation] = useState<LocationCoords | null>(null);
 
-  // Obtener ubicación actual del recolector
-  const fetchCurrentLocation = async () => {
-    try {
-      const location = false;
-      if (location) {
-        setCurrentLocation(location);
-        // Enviar ubicación al servidor
-        await updateCollectorLocation(location);
-      }
-    } catch (err) {
-      console.error('Error getting current location:', err);
-    }
-  };
-
-  // Actualizar ubicación del recolector en el servidor
-  const updateCollectorLocation = async (location: LocationCoords) => {
-    try {
-      await collectorPickupApiService.updateMyLocation(location);
-    } catch (err) {
-      console.error('Error updating collector location:', err);
-    }
-  };
-
-  // Marcar punto como completado
-  const completePickupPoint = async (pointId: number) => {
-    try {
-      const data = await collectorPickupApiService.completePickupPoint(pointId);
-      if (data.success) {
-        Alert.alert('Éxito', 'Punto de recogida marcado como completado');
-        fetchPickupPoints();
-        setShowDetails(false);
-      } else {
-        Alert.alert('Error', data.message || 'No se pudo marcar como completado');
-      }
-    } catch (err) {
-      Alert.alert('Error', 'Error al completar el punto');
-      console.error('Error completing pickup point:', err);
-    }
-  };
-
-  // Cargar datos iniciales
   useEffect(() => {
-    fetchCurrentLocation();
-    fetchPickupPoints();
-  }, []);
-
-  // Actualizar ubicación cada 30 segundos
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchCurrentLocation();
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Animar el mapa para mostrar todos los puntos
-  useEffect(() => {
-    if (pickupPoints.length > 0) {
-      const coordinates = pickupPoints.map(point => [
-        point.longitude,
-        point.latitude,
-      ]);
+    const requestLocation = async () => {
+      const currentLocation = await getCurrentLocation();
 
       if (currentLocation) {
-        coordinates.unshift([currentLocation.longitude, currentLocation.latitude]);
+        setLocation(currentLocation);
+        setCameraConfig({
+          centerCoordinate: [currentLocation.longitude, currentLocation.latitude], // [longitude, latitude]
+          zoomLevel: 14,
+          animationDuration: 1000,
+        })
+      } else {
+        Alert.alert(
+            'Permiso requerido',
+            'Necesitamos acceso a tu ubicación para continuar.',
+        );
       }
+    };
 
-      // Calcular bounds de las coordenadas
-      let minLon = coordinates[0][0];
-      let maxLon = coordinates[0][0];
-      let minLat = coordinates[0][1];
-      let maxLat = coordinates[0][1];
-
-      coordinates.forEach(coord => {
-        minLon = Math.min(minLon, coord[0]);
-        maxLon = Math.max(maxLon, coord[0]);
-        minLat = Math.min(minLat, coord[1]);
-        maxLat = Math.max(maxLat, coord[1]);
-      });
-
-      // Calcular el centro y zoom
-      const centerLon = (minLon + maxLon) / 2;
-      const centerLat = (minLat + maxLat) / 2;
-
-      // Estimar zoom level basado en la distancia
-      const maxDelta = Math.max(maxLon - minLon, maxLat - minLat);
-      const zoomLevel = Math.min(16, Math.max(10, 14 - Math.log2(maxDelta * 111)));
-
-      setCameraConfig({
-        centerCoordinate: [centerLon, centerLat],
-        zoomLevel: zoomLevel,
-        animationDuration: 1000,
-      });
-    }
-  }, [pickupPoints, currentLocation]);
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    fetchCurrentLocation();
-    fetchPickupPoints();
-  };
-
-  const completedCount = pickupPoints.filter(p => p.completed_at).length;
-  const pendingCount = pickupPoints.length - completedCount;
-
-  if (loading) {
-    return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.errorText, { color: colors.text, marginTop: 15 }]}>
-            Cargando puntos de recogida...
-          </Text>
-        </View>
-    );
-  }
-
-  if (error) {
-    return (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
-            <Text style={styles.retryButtonText}>Reintentar</Text>
-          </TouchableOpacity>
-        </View>
-    );
-  }
+    requestLocation();
+  }, []);
 
   return (
       <View style={styles.container}>
-        <Header action={() => navigation.navigate('Account')} />
+        <Header action={() => navigation.navigate('Account')} goBack={() => navigation.goBack()} />
 
         <MapView
             ref={mapViewRef}
@@ -467,8 +320,8 @@ export const MapScreen = (): ReactElement => {
               zoomLevel={cameraConfig.zoomLevel}
           />
 
-          {/* Capa del marcador del recolector */}
-          {currentLocation && (
+          {/* Capa del marcador de mi ubicación */}
+          {location && (
               <ShapeSource
                   id="collector-source"
                   shape={{
@@ -480,7 +333,7 @@ export const MapScreen = (): ReactElement => {
                         properties: { title: 'Tu ubicación' },
                         geometry: {
                           type: 'Point',
-                          coordinates: [currentLocation.longitude, currentLocation.latitude],
+                          coordinates: [location.longitude, location.latitude],
                         },
                       },
                     ],
@@ -499,37 +352,29 @@ export const MapScreen = (): ReactElement => {
               </ShapeSource>
           )}
 
-          {/* Capa de marcadores de puntos de recogida */}
-          {pickupPoints.length > 0 && (
+          {/* Capa de marcadores de recolector */}
+          {orderViewMap?.collector?.location && (
               <ShapeSource
                   id="pickup-points-source"
                   shape={{
                     type: 'FeatureCollection',
-                    features: pickupPoints.map(point => ({
-                      type: 'Feature',
-                      id: point.id,
-                      properties: {
-                        title: point.user_name,
-                        address: point.address,
-                        completed: !!point.completed_at,
-                        order_id: point.order_id,
+                    features: [
+                      {
+                        type: 'Feature',
+                        properties: {
+                          address: orderViewMap.address,
+                          order_id:   orderViewMap.id,
+                          completed: false,
+                        },
+                        geometry: {
+                          type: 'Point',
+                          coordinates: [
+                            parseFloat(orderViewMap.collector.location.longitude),
+                            parseFloat(orderViewMap.collector.location.latitude),
+                          ],
+                        },
                       },
-                      geometry: {
-                        type: 'Point',
-                        coordinates: [point.longitude, point.latitude],
-                      },
-                    })),
-                  }}
-                  onPress={(event: any) => {
-                    if (event.features.length > 0) {
-                      const feature = event.features[0];
-                      const pointId = feature.id as number;
-                      const point = pickupPoints.find(p => p.id === pointId);
-                      if (point) {
-                        setSelectedPoint(point);
-                        setShowDetails(true);
-                      }
-                    }
+                    ]
                   }}
               >
                 <CircleLayer
@@ -537,7 +382,7 @@ export const MapScreen = (): ReactElement => {
                     filter={['==', ['get', 'completed'], true]}
                     style={{
                       circleRadius: 17,
-                      circleColor: colors.success || '#4CAF50',
+                      circleColor: colors.warning,
                       circleOpacity: 0.8,
                     }}
                 />
@@ -546,182 +391,15 @@ export const MapScreen = (): ReactElement => {
                     filter={['==', ['get', 'completed'], false]}
                     style={{
                       circleRadius: 17,
-                      circleColor: colors.secondary,
+                      circleColor: colors.warning,
                       circleOpacity: 0.8,
                     }}
                 />
               </ShapeSource>
           )}
 
-          {/* Línea de ruta entre puntos */}
-          {pickupPoints.length > 1 && (
-              <ShapeSource
-                  id="route-line-source"
-                  shape={{
-                    type: 'Feature',
-                    properties: {},
-                    geometry: {
-                      type: 'LineString',
-                      coordinates: pickupPoints.map(p => [p.longitude, p.latitude]),
-                    },
-                  }}
-              >
-                <LineLayer
-                    id="route-line-layer"
-                    style={{
-                      lineColor: colors.primary,
-                      lineWidth: 3,
-                      lineOpacity: 0.7,
-                    }}
-                />
-              </ShapeSource>
-          )}
         </MapView>
 
-        {/* Estadísticas */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Total de puntos</Text>
-            <Text style={styles.statValue}>{pickupPoints.length}</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Pendientes</Text>
-            <Text style={[styles.statValue, { color: colors.secondary }]}>
-              {pendingCount}
-            </Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Completados</Text>
-            <Text style={[styles.statValue, { color: colors.success || '#4CAF50' }]}>
-              {completedCount}
-            </Text>
-          </View>
-        </View>
-
-        {/* Botón de actualización */}
-        <TouchableOpacity
-            style={[styles.floatingButton, { top: 80 + (width > 400 ? 80 : 60) }]}
-            onPress={handleRefresh}
-            disabled={refreshing}
-        >
-          {refreshing ? (
-              <ActivityIndicator color={colors.primary} size="small" />
-          ) : (
-              <Icon name="sync" size={20} color={colors.primary} />
-          )}
-        </TouchableOpacity>
-
-        {/* Lista de puntos */}
-        <View style={styles.listContainer}>
-          <View style={styles.listHeader}>
-            <Text style={styles.listHeaderTitle}>
-              Puntos de Recogida ({pendingCount})
-            </Text>
-            <Icon name="chevron-up" size={16} color={colors.textSecondary} />
-          </View>
-          <ScrollView style={styles.listContent} showsVerticalScrollIndicator={false}>
-            {pickupPoints.map((point) => (
-                <TouchableOpacity
-                    key={point.id}
-                    style={[
-                      styles.pointItem,
-                      point.completed_at && styles.pointItemCompleted,
-                    ]}
-                    onPress={() => {
-                      setSelectedPoint(point);
-                      setShowDetails(true);
-                    }}
-                >
-                  <Text style={styles.pointItemTitle}>
-                    {point.user_name}
-                  </Text>
-                  <Text style={styles.pointItemAddress}>
-                    📍 {point.address}
-                  </Text>
-                  <Text style={styles.pointItemUser}>
-                    Orden #{point.order_id}
-                  </Text>
-
-                  {point.completed_at ? (
-                      <View style={styles.completedBadge}>
-                        <Text style={styles.completedBadgeText}>✓ Completado</Text>
-                      </View>
-                  ) : (
-                      <TouchableOpacity
-                          style={styles.completeButton}
-                          onPress={() => completePickupPoint(point.id)}
-                      >
-                        <Text style={styles.completeButtonText}>Marcar completado</Text>
-                      </TouchableOpacity>
-                  )}
-                </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Modal de detalles */}
-        <Modal
-            visible={showDetails && !!selectedPoint}
-            transparent
-            animationType="slide"
-            onRequestClose={() => setShowDetails(false)}
-        >
-          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <View style={styles.detailsModal}>
-              <Text style={styles.detailsTitle}>Detalles del Punto</Text>
-
-              {selectedPoint && (
-                  <>
-                    <View style={styles.detailsContent}>
-                      <Text style={styles.detailsLabel}>Nombre del Usuario</Text>
-                      <Text style={styles.detailsValue}>{selectedPoint.user_name}</Text>
-                    </View>
-
-                    <View style={styles.detailsContent}>
-                      <Text style={styles.detailsLabel}>Dirección</Text>
-                      <Text style={styles.detailsValue}>{selectedPoint.address}</Text>
-                    </View>
-
-                    {selectedPoint.user_phone && (
-                        <View style={styles.detailsContent}>
-                          <Text style={styles.detailsLabel}>Teléfono</Text>
-                          <Text style={styles.detailsValue}>{selectedPoint.user_phone}</Text>
-                        </View>
-                    )}
-
-                    {selectedPoint.notes && (
-                        <View style={styles.detailsContent}>
-                          <Text style={styles.detailsLabel}>Notas</Text>
-                          <Text style={styles.detailsValue}>{selectedPoint.notes}</Text>
-                        </View>
-                    )}
-
-                    {!selectedPoint.completed_at ? (
-                        <TouchableOpacity
-                            style={styles.completeButton}
-                            onPress={() => {
-                              completePickupPoint(selectedPoint.id);
-                            }}
-                        >
-                          <Text style={styles.completeButtonText}>Marcar Completado</Text>
-                        </TouchableOpacity>
-                    ) : (
-                        <View style={styles.completedBadge}>
-                          <Text style={styles.completedBadgeText}>✓ Completado</Text>
-                        </View>
-                    )}
-                  </>
-              )}
-
-              <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={() => setShowDetails(false)}
-              >
-                <Text style={styles.closeButtonText}>Cerrar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
       </View>
   );
 };
