@@ -4,13 +4,13 @@ import {
   StyleSheet, Alert,
 } from 'react-native';
 import * as MapLibreRN from '@maplibre/maplibre-react-native';
-const { MapView, Camera } = MapLibreRN;
+const { MapView, Camera, Images } = MapLibreRN;
 import { Header } from '../../components/header/Header';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, fontFamily, shadows } from '../../utils/constants';
 import {getCurrentLocation} from "../../functions/Geolocation.tsx";
-import {CircleLayer, ShapeSource} from "@maplibre/maplibre-react-native";
+import {CircleLayer, ShapeSource, SymbolLayer} from "@maplibre/maplibre-react-native";
 import useOrderStore from "../../store/orderStore.ts";
 
 const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
@@ -319,6 +319,13 @@ export const MapScreen = (): ReactElement => {
               centerCoordinate={cameraConfig.centerCoordinate}
               zoomLevel={cameraConfig.zoomLevel}
           />
+          <Images
+              images={{
+                collectorIcon: require('../../../assets/images/recolector.png'),
+                pickupIcon: require('../../../assets/images/recogida.png'),
+              }}
+          />
+
 
           {/* Capa del marcador de mi ubicación */}
           {location && (
@@ -339,14 +346,13 @@ export const MapScreen = (): ReactElement => {
                     ],
                   }}
               >
-                <CircleLayer
+                <SymbolLayer
                     id="collector-layer"
                     style={{
-                      circleRadius: 22,
-                      circleColor: colors.primary,
-                      circleOpacity: 1,
-                      circleStrokeWidth: 3,
-                      circleStrokeColor: colors.white,
+                      iconImage: 'pickupIcon',
+                      iconSize: 0.14,
+                      iconAllowOverlap: true,
+                      iconIgnorePlacement: true,
                     }}
                 />
               </ShapeSource>
@@ -377,22 +383,15 @@ export const MapScreen = (): ReactElement => {
                     ]
                   }}
               >
-                <CircleLayer
-                    id="pickup-completed-layer"
-                    filter={['==', ['get', 'completed'], true]}
-                    style={{
-                      circleRadius: 17,
-                      circleColor: colors.warning,
-                      circleOpacity: 0.8,
-                    }}
-                />
-                <CircleLayer
+
+                <SymbolLayer
                     id="pickup-pending-layer"
                     filter={['==', ['get', 'completed'], false]}
                     style={{
-                      circleRadius: 17,
-                      circleColor: colors.warning,
-                      circleOpacity: 0.8,
+                      iconImage: 'collectorIcon',
+                      iconSize: 0.11,
+                      iconAllowOverlap: true,
+                      iconIgnorePlacement: true,
                     }}
                 />
               </ShapeSource>
