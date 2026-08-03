@@ -1,7 +1,6 @@
-import {View, Text, ScrollView, ActivityIndicator} from 'react-native';
+import {View, Text, ScrollView, ActivityIndicator, Image} from 'react-native';
 import React, {ReactElement, useEffect} from 'react';
 import CardHistoryStyles from './styles';
-import Icon from 'react-native-vector-icons/FontAwesome5';
 import {colors} from '../../../utils/constants';
 import useOrderStore from '../../../store/orderStore';
 import {OrderHistoryItem} from '../../../types/order.types';
@@ -37,16 +36,17 @@ export const CardHistory = (): ReactElement => {
 
   const renderOrderCard = (order: OrderHistoryItem) => (
     <View key={order.id} style={CardHistoryStyles.orderCard}>
-      <View style={CardHistoryStyles.orderImageContainer}>
-        <Icon name="shopping-cart" size={30} color={colors.primary} />
-      </View>
+      <Image
+          source={require('../../../../assets/images/recogida.png')}
+          style={CardHistoryStyles.image}
 
+      />
       <View style={CardHistoryStyles.orderContent}>
         <Text style={CardHistoryStyles.orderFecha}>
           {formatDate(order.date)}
         </Text>
         <Text style={CardHistoryStyles.orderNombre}>
-          {order.type_waste?.map(w => w.type_waste).filter(Boolean).join(', ') || 'Sin materiales'}
+          {order.type_waste?.map(w => w?.name).filter(Boolean).join(', ') || 'Sin materiales'}
         </Text>
         <Text style={CardHistoryStyles.orderTelefono}>
           {order.collector

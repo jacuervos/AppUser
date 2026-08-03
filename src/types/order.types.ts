@@ -28,6 +28,7 @@ export interface OrderTypeWaste {
   type_waste_name: string;
   weight: number;
   points: number;
+  name?: string;
 }
 
 export interface OrderState {

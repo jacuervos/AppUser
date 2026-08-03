@@ -66,15 +66,6 @@ const CardHistoryStyles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 3,
   },
-  orderImageContainer: {
-    width: 60,
-    height: 60,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-  },
   orderContent: {
     flex: 1,
     justifyContent: 'space-between',
@@ -110,6 +101,10 @@ const CardHistoryStyles = StyleSheet.create({
   },
 
   // Cards de incentivos
+  image: {
+    width: 90,
+    height: 90,
+  },
   incentiveCard: {
     backgroundColor: colors.white,
     borderRadius: 12,
