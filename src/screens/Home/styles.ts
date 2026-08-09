@@ -435,7 +435,7 @@ const homeStyles = StyleSheet.create({
     marginBottom: 14,
     marginHorizontal: 2,
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: {
@@ -463,7 +463,6 @@ const homeStyles = StyleSheet.create({
     fontSize: 14,
     fontFamily: fontFamily.fontFamilyRegular,
     color: colors.black,
-    marginBottom: 4,
     lineHeight: 20,
   },
   tipCategory: {

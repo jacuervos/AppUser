@@ -17,30 +17,7 @@ export type RootStackParamList = {
       tags?: string[];
     };
   };
-  BlogsList: {
-    initialBlogs?: Array<{
-      id: number;
-      title: string;
-      author: string;
-      date: string;
-      category: string;
-      excerpt: string;
-      readTime?: string;
-      image?: string;
-      tags?: string[];
-      content?: string;
-    }>;
-  };
-  TipsDetail: {
-    initialTips?: Array<{
-      id: number;
-      tip: string;
-      category: string;
-      description?: string;
-      difficulty?: 'Fácil' | 'Medio' | 'Avanzado';
-      impact?: 'Bajo' | 'Medio' | 'Alto';
-      steps?: string[];
-    }>;
-  };
+  BlogsList: undefined;
+  TipsDetail: undefined;
   Profile: undefined;
 };

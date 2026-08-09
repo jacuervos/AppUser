@@ -17,6 +17,8 @@ import {RootStackParamList} from '../../types/navigation';
 import useOrderStore from "../../store/orderStore.ts";
 import {OrderHistoryItem} from "../../types/order.types.ts";
 import homeStyles from './styles';
+import useBlogStore from "../../store/blogStore.ts";
+import useTipStore from "../../store/tipStore.ts";
 
 type HomeNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -28,6 +30,8 @@ type HomeNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const Home = (): ReactElement => {
   const {userInfo} = useAuth();
   const {orderActive, fetchMyOrderActive, getInfoOrderMap} = useOrderStore();
+  const {blogs, getBlogs} = useBlogStore();
+  const {tips, getTips} = useTipStore();
 
   const { GeocoderModule } = NativeModules;
 
@@ -43,26 +47,12 @@ const Home = (): ReactElement => {
     });
   };
 
-  // Datos de ejemplo para blogs
-  const blogs = [
-    { id: 1, title: 'Cómo reducir tu huella de carbono', author: 'EcoTeam', date: '2024-02-10', category: 'Sostenibilidad', excerpt: 'Descubre estrategias efectivas para reducir tu impacto ambiental en el día a día.' },
-    { id: 2, title: 'Recetas sostenibles para el hogar', author: 'GreenLife', date: '2024-02-08', category: 'Hogar', excerpt: 'Aprende a preparar productos de limpieza ecológicos y naturales en casa.' },
-    { id: 3, title: 'Tecnología verde del futuro', author: 'TechEco', date: '2024-02-05', category: 'Tecnología', excerpt: 'Explora las innovaciones tecnológicas que están revolucionando la sostenibilidad.' }
-  ];
-
-  // Datos de ejemplo para tips
-  const tips = [
-    { id: 1, tip: 'Usa bolsas reutilizables para tus compras', category: 'Consumo' },
-    { id: 2, tip: 'Ahorra agua cerrando el grifo al cepillarte', category: 'Hogar' },
-    { id: 3, tip: 'Recicla correctamente separando los materiales', category: 'Reciclaje' }
-  ];
-
   const handleBlogsPress = () => {
-    navigation.navigate('BlogsList', { initialBlogs: blogs });
+    navigation.navigate('BlogsList');
   };
 
   const handleTipsPress = () => {
-    navigation.navigate('TipsDetail', { initialTips: tips });
+    navigation.navigate('TipsDetail');
   };
 
   const handleOrderPress = (order: OrderHistoryItem) => {
@@ -99,6 +89,8 @@ const Home = (): ReactElement => {
 
   useEffect(() => {
     fetchMyOrderActive();
+    getBlogs();
+    getTips();
   }, []);
 
 
@@ -188,11 +180,11 @@ const Home = (): ReactElement => {
             style={homeStyles.sectionHeader}
             onPress={handleBlogsPress}>
             <Icon name="blog" size={20} color={colors.primary} />
-            <Text style={homeStyles.sectionTitle}>Blog Ecológico</Text>
+            <Text style={homeStyles.sectionTitle}>Blog Ecológicos</Text>
             <Icon name="chevron-right" size={16} color={colors.gray} style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
           
-          {blogs.map((blog) => (
+          {blogs.slice(0, 3).map((blog) => (
             <View 
               key={blog.id}
               style={homeStyles.blogCard}>
@@ -201,10 +193,6 @@ const Home = (): ReactElement => {
               </View>
               <View style={homeStyles.blogContent}>
                 <Text style={homeStyles.blogTitle}>{blog.title}</Text>
-                <View style={homeStyles.blogMeta}>
-                  <Text style={homeStyles.blogAuthor}>Por {blog.author}</Text>
-                  <Text style={homeStyles.blogDate}>{blog.date}</Text>
-                </View>
               </View>
             </View>
           ))}
@@ -220,15 +208,12 @@ const Home = (): ReactElement => {
             <Icon name="chevron-right" size={16} color={colors.gray} style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
           
-          {tips.map((tip) => (
+          {tips.slice(0, 3).map((tip) => (
             <View key={tip.id} style={homeStyles.tipCard}>
               <View style={homeStyles.tipIcon}>
-                <Icon name="leaf" size={16} color={colors.secondary} />
+                <Icon name="leaf" size={16} color={colors.primary} />
               </View>
-              <View style={homeStyles.tipContent}>
-                <Text style={homeStyles.tipText}>{tip.tip}</Text>
-                <Text style={homeStyles.tipCategory}>{tip.category}</Text>
-              </View>
+              <Text style={homeStyles.tipText}>{tip.title}</Text>
             </View>
           ))}
         </View>
