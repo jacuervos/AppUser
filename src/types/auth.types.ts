@@ -38,6 +38,7 @@ export interface UserInfoResponse {
 export interface LoginCredentials {
   email: string;
   password: string;
+  firebase_token?: string | null;
 }
 
 // Types for password reset

@@ -132,6 +132,16 @@ class AuthApiService {
     }
   }
 
+  async updateFirebaseToken(firebaseToken: string): Promise<void> {
+    try {
+      await this.authApi.post('/firebase-token', {
+        firebase_token: firebaseToken,
+      });
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   /**
    * Update user with diferents params
    * @param credentials - Name, phone, photo
