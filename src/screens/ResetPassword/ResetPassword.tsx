@@ -75,7 +75,6 @@ const ResetPassword = () => {
         setError(response.message || 'Error al cambiar la contraseña');
       }
     } catch (error: any) {
-      console.error('Reset password error:', error);
       setError(error?.message || 'Error al cambiar la contraseña');
     } finally {
       setIsLoading(false);

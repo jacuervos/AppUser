@@ -127,7 +127,6 @@ const Home = (): ReactElement => {
           setOrdersWithAddress(data);
         }
       } catch (error) {
-        console.error('Error cargando direcciones:', error);
         if (!cancelled) {
           setOrdersWithAddress(orderActive);
         }

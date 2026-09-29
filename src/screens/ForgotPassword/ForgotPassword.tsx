@@ -67,7 +67,6 @@ const ForgotPassword = () => {
         setError(response.message || 'Error al enviar el email de recuperación');
       }
     } catch (error: any) {
-      console.error('Error sending reset email:', error);
       setError(error?.message || 'Error al enviar el email de recuperación');
     } finally {
       setIsLoading(false);
@@ -92,7 +91,6 @@ const ForgotPassword = () => {
         setError(response.message || 'Código de verificación inválido');
       }
     } catch (error: any) {
-      console.error('Error validating token:', error);
       setError(error?.message || 'Código de verificación inválido');
     } finally {
       setIsLoading(false);
@@ -117,7 +115,6 @@ const ForgotPassword = () => {
         setError(response.message || 'Error al reenviar el código');
       }
     } catch (error: any) {
-      console.error('Error resending code:', error);
       setError(error?.message || 'Error al reenviar el código');
     } finally {
       setIsLoading(false);

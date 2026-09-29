@@ -202,7 +202,6 @@ class AuthApiService {
 
       return response.data;
     } catch (error) {
-      console.error('Get user info error:', error);
       throw this.handleError(error);
     }
   }

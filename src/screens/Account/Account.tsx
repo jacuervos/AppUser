@@ -73,7 +73,6 @@ export const Account = (): ReactElement => {
                 Alert.alert('Éxito', 'Sesión cerrada exitosamente');
               })
               .catch((error) => {
-                console.error('Logout error:', error);
                 Alert.alert('Error', 'No se pudo cerrar sesión. Intenta de nuevo.');
               });
           },
