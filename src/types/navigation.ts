@@ -1,3 +1,5 @@
+import {OrderHistoryItem} from './order.types';
+
 export type RootStackParamList = {
   InitView: undefined;
   Register: undefined;
@@ -20,4 +22,7 @@ export type RootStackParamList = {
   BlogsList: undefined;
   TipsDetail: undefined;
   Profile: undefined;
+  OrderDetail: {
+    order: OrderHistoryItem;
+  };
 };

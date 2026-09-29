@@ -1,9 +1,12 @@
-import {View, Text, ScrollView, ActivityIndicator, Image} from 'react-native';
+import {View, Text, ScrollView, ActivityIndicator, Image, TouchableOpacity} from 'react-native';
 import React, {ReactElement, useEffect} from 'react';
+import {useNavigation} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import CardHistoryStyles from './styles';
 import {colors} from '../../../utils/constants';
 import useOrderStore from '../../../store/orderStore';
 import {OrderHistoryItem} from '../../../types/order.types';
+import {RootStackParamList} from '../../../types/navigation';
 
 /**
  * @component Card History
@@ -11,6 +14,7 @@ import {OrderHistoryItem} from '../../../types/order.types';
  */
 export const CardHistory = (): ReactElement => {
 
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { myOrders, loading, error, fetchMyOrders } = useOrderStore();
 
   useEffect(() => {
@@ -35,7 +39,11 @@ export const CardHistory = (): ReactElement => {
   };
 
   const renderOrderCard = (order: OrderHistoryItem) => (
-    <View key={order.id} style={CardHistoryStyles.orderCard}>
+    <TouchableOpacity
+      key={order.id}
+      activeOpacity={0.7}
+      style={CardHistoryStyles.orderCard}
+      onPress={() => navigation.navigate('OrderDetail', {order})}>
       <Image
           source={require('../../../../assets/images/recogida.png')}
           style={CardHistoryStyles.image}
@@ -63,7 +71,7 @@ export const CardHistory = (): ReactElement => {
           </Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderOrdersContent = () => {
