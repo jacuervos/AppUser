@@ -282,10 +282,18 @@ const homeStyles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
+  statusOrder: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    width: '40%',
+    marginTop: 10
+  },
   orderStatusText: {
     fontSize: 12,
     fontFamily: fontFamily.fontFamilySemiBold,
     color: colors.white,
+    textAlign: 'center',
   },
   orderInfo: {
     flexDirection: 'row',

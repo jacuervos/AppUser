@@ -19,6 +19,7 @@ import {OrderHistoryItem} from "../../types/order.types.ts";
 import homeStyles from './styles';
 import useBlogStore from "../../store/blogStore.ts";
 import useTipStore from "../../store/tipStore.ts";
+import {RescheduleOrderModal} from '../../components/modals/RescheduleOrderModal';
 
 type HomeNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -36,6 +37,7 @@ const Home = (): ReactElement => {
   const { GeocoderModule } = NativeModules;
 
   const [ordersWithAddress, setOrdersWithAddress] = useState<OrderHistoryItem[] | []>([]);
+  const [orderToReschedule, setOrderToReschedule] = useState<OrderHistoryItem | null>(null);
 
   const navigation = useNavigation<HomeNavigationProp>();
 
@@ -67,24 +69,20 @@ const Home = (): ReactElement => {
     }
   };
 
-  const loadAddresses = async () => {
-    try {
-      const data = await Promise.all(
-          orderActive.map(async (order) => {
-            const response = await GeocoderModule.getAddress(
-                parseFloat(order.pickup_location.latitude),
-                parseFloat(order.pickup_location.longitude),
-            );
-            return {
-              ...order,
-              address: response.addressLine,
-            };
-          }),
-      );
-      setOrdersWithAddress(data);
-    } catch (error) {
-      console.error('Error cargando direcciones:', error);
+  const formatOrderDate = (dateString?: string) => {
+    if (!dateString) {
+      return '';
     }
+    const normalized = dateString.includes('T') ? dateString : dateString.replace(' ', 'T');
+    const date = new Date(normalized);
+    if (Number.isNaN(date.getTime())) {
+      return dateString;
+    }
+    return date.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
   };
 
   useEffect(() => {
@@ -93,11 +91,54 @@ const Home = (): ReactElement => {
     getTips();
   }, []);
 
-
   useEffect(() => {
-    if (orderActive.length > 0) {
-      loadAddresses();
+    let cancelled = false;
+
+    if (orderActive.length === 0) {
+      setOrdersWithAddress([]);
+      return;
     }
+
+    setOrdersWithAddress(current =>
+      orderActive.map(order => {
+        const previous = current.find(item => item.id === order.id);
+        return {
+          ...order,
+          address: previous?.address || order.address,
+        };
+      }),
+    );
+
+    const loadAddresses = async () => {
+      try {
+        const data = await Promise.all(
+          orderActive.map(async order => {
+            const response = await GeocoderModule.getAddress(
+              parseFloat(order.pickup_location.latitude),
+              parseFloat(order.pickup_location.longitude),
+            );
+            return {
+              ...order,
+              address: response.addressLine,
+            };
+          }),
+        );
+        if (!cancelled) {
+          setOrdersWithAddress(data);
+        }
+      } catch (error) {
+        console.error('Error cargando direcciones:', error);
+        if (!cancelled) {
+          setOrdersWithAddress(orderActive);
+        }
+      }
+    };
+
+    loadAddresses();
+
+    return () => {
+      cancelled = true;
+    };
   }, [orderActive]);
 
   return (
@@ -143,32 +184,39 @@ const Home = (): ReactElement => {
                     (total, item) => total + item.points,
                     0,
                 );
-                return <TouchableOpacity
-                    key={order.id}
-                    style={homeStyles.orderCard}
-                    onPress={() => handleOrderPress(order)}>
-                  <View style={homeStyles.orderHeader}>
-                    <Text style={homeStyles.orderNumber}>{order.id}</Text>
-                    <View style={[homeStyles.statusBadge, {
-                      backgroundColor: colors.primary
-                    }]}>
-                      <Text style={homeStyles.orderStatusText}>{order.status}</Text>
+                return <View key={order.id} style={homeStyles.orderCard}>
+                  <TouchableOpacity onPress={() => handleOrderPress(order)}>
+                    <View style={homeStyles.orderHeader}>
+                      <Text style={homeStyles.orderNumber}>{order.id}</Text>
+                      <View style={[homeStyles.statusBadge, {
+                        backgroundColor: colors.primary
+                      }]}>
+                        <Text style={homeStyles.orderStatusText}>{order.status}</Text>
+                      </View>
                     </View>
-                  </View>
 
-                  <View style={homeStyles.orderInfo}>
-                    <Icon name="map-marker-alt" size={12} color={colors.gray} />
-                    <Text style={homeStyles.orderLocation}>{order.address}</Text>
-                  </View>
-                  <View style={homeStyles.orderDetails}>
-                    <Text style={homeStyles.orderMaterials}>
-                      Materiales: {materialNames}
-                    </Text>
-                    <View style={homeStyles.orderBottom}>
-                      <Text style={homeStyles.orderPoints}>🎯 {totalPoints} pts</Text>
+                    <View style={homeStyles.orderInfo}>
+                      <Icon name="map-marker-alt" size={12} color={colors.gray} />
+                      <Text style={homeStyles.orderLocation}>{order.address}</Text>
                     </View>
-                  </View>
-                </TouchableOpacity>
+                    <View style={homeStyles.orderDetails}>
+                      <Text style={homeStyles.orderMaterials}>
+                        Materiales: {materialNames}
+                      </Text>
+                      <View style={homeStyles.orderBottom}>
+                        <Text style={homeStyles.orderTime}>{formatOrderDate(order.date)}</Text>
+                        <Text style={homeStyles.orderPoints}>🎯 {totalPoints} pts</Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                      onPress={() => setOrderToReschedule(order)}
+                      style={[homeStyles.statusOrder, {
+                    backgroundColor: colors.info
+                  }]}>
+                    <Text style={homeStyles.orderStatusText}>Reprogramar órden</Text>
+                  </TouchableOpacity>
+                </View>
               })}
             </View>
           </>
@@ -219,6 +267,12 @@ const Home = (): ReactElement => {
         </View>
 
       </ScrollView>
+
+      <RescheduleOrderModal
+        visible={orderToReschedule !== null}
+        order={orderToReschedule}
+        onClose={() => setOrderToReschedule(null)}
+      />
     </View>
   );
 };

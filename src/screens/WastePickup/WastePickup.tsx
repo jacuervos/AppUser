@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome6';
 import IconFont from 'react-native-vector-icons/FontAwesome5';
-import {Calendar, DateData} from 'react-native-calendars';
 import {colors, fontFamily, shadows} from '../../utils/constants';
+import {PickupDatePicker} from '../../components/PickupDatePicker';
 import {getCurrentLocation} from "../../functions/Geolocation";
 import useWasteTypeStore from '../../store/wasteTypeStore';
 import useOrderStore from '../../store/orderStore';
@@ -45,7 +45,6 @@ const WastePickupScreen = (): ReactElement => {
 
   const [weight, setWeight] = useState<number>(0);
   const [addedWasteItems, setAddedWasteItems] = useState<AddedWasteItem[]>([]);
-  const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [location, setLocation] = useState<LocationCoords | null>(null);
 
@@ -295,40 +294,8 @@ const WastePickupScreen = (): ReactElement => {
 
       {/* Action Buttons */}
       <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={styles.calendarButton}
-          onPress={() => setShowCalendar(!showCalendar)}>
-          <Icon name="calendar-alt" size={20} color={colors.primary} />
-          <Text style={styles.calendarButtonText}>
-            {selectedDate ? `Fecha: ${selectedDate}` : 'Seleccionar fecha'}
-          </Text>
-        </TouchableOpacity>
+        <PickupDatePicker selectedDate={selectedDate} onChange={setSelectedDate} />
 
-        {showCalendar && (
-          <View style={styles.calendarContainer}>
-            <Calendar
-              onDayPress={(day: DateData) => {
-                setSelectedDate(day.dateString);
-                setShowCalendar(false);
-              }}
-              markedDates={
-                selectedDate
-                  ? {[selectedDate]: {selected: true, selectedColor: colors.primary}}
-                  : {}
-              }
-              minDate={new Date().toISOString().slice(0, 10)}
-              theme={{
-                todayTextColor: colors.primary,
-                arrowColor: colors.primary,
-                selectedDayBackgroundColor: colors.primary,
-                textDayFontFamily: fontFamily.fontFamilyRegular,
-                textMonthFontFamily: fontFamily.fontFamilySemiBold,
-                textDayHeaderFontFamily: fontFamily.fontFamilyMedium,
-              }}
-            />
-          </View>
-        )}
-        
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={orderLoading}>
           <Icon name={orderLoading ? 'spinner' : 'save'} size={20} color={colors.white} />
           <Text style={styles.submitButtonText}>{orderLoading ? 'Guardando...' : 'Guardar Solicitud'}</Text>
@@ -487,31 +454,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
     gap: 16,
-  },
-  calendarButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.white,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    ...shadows.small,
-  },
-  calendarButtonText: {
-    fontSize: 16,
-    fontFamily: fontFamily.fontFamilyMedium,
-    color: colors.primary,
-    marginLeft: 8,
-  },
-  calendarContainer: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.lightGray,
-    ...shadows.medium,
   },
   submitButton: {
     flexDirection: 'row',

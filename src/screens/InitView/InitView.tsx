@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {Alert, Text, View, Image, TouchableOpacity} from 'react-native';
 import {PrincipalTextInput} from '../../components/textInput/PrincipalTextInput.tsx';
 import {Formik} from 'formik';
@@ -22,22 +22,24 @@ const InitView = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-  const { login, isLoading, error, isAuthenticated, clearError } = useAuth();
+  const { login, isLoading, error, isAuthenticated, isInitialized, clearError } = useAuth();
   const [isInitializing, setIsInitializing] = useState(true);
+  const didRestoreSession = useRef(false);
 
-  // Verificar si el usuario ya está autenticado al cargar el componente
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      if (isAuthenticated) {
-        navigation.replace('Tab');
-      } else {
-        setIsInitializing(false);
-      }
-    };
+    if (!isInitialized || didRestoreSession.current) {
+      return;
+    }
 
-    checkAuthStatus();
-  }, [navigation]);
+    didRestoreSession.current = true;
+
+    if (isAuthenticated) {
+      navigation.replace('Tab');
+      return;
+    }
+
+    setIsInitializing(false);
+  }, [isAuthenticated, isInitialized, navigation]);
 
   const creteSchema = Yup.object().shape({
     email: Yup.string()

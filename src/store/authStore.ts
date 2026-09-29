@@ -24,14 +24,38 @@ interface AuthActions {
 
 type AuthStore = AuthState & AuthActions;
 
+type AuthPersistApi = {
+  persist?: {
+    hasHydrated: () => boolean;
+    onFinishHydration: (callback: () => void) => () => void;
+  };
+};
+
+let initializePromise: Promise<void> | null = null;
+
+const waitForHydration = (api: AuthPersistApi): Promise<void> => {
+  const persistApi = api.persist;
+  if (!persistApi || persistApi.hasHydrated()) {
+    return Promise.resolve();
+  }
+
+  return new Promise(resolve => {
+    const unsubscribe = persistApi.onFinishHydration(() => {
+      unsubscribe();
+      resolve();
+    });
+  });
+};
+
 const useAuthStore = create<AuthStore>()(
   persist(
-    (set, get) => ({
+    (set, get, api) => ({
       // Initial state
       isAuthenticated: false,
       token: null,
       userInfo: null,
       isLoading: false,
+      isInitialized: false,
       error: null,
 
       // Actions
@@ -83,10 +107,13 @@ const useAuthStore = create<AuthStore>()(
             firebase_token: firebaseToken,
           });
 
-          if (response.success) {
+          const accessToken = response.data?.access_token;
+          if (response.success && accessToken) {
+            await AsyncStorage.setItem('access_token', accessToken);
+
             set({
               isAuthenticated: true,
-              token: response.data.access_token,
+              token: accessToken,
               isLoading: false,
               error: null,
             });
@@ -99,20 +126,40 @@ const useAuthStore = create<AuthStore>()(
               }
             }
 
-            // Get user info after successful login
-            await get().getUserInfo();
+            // Get user info after successful login. Un fallo al leer el
+            // perfil no debe borrar el token que ya quedó en AsyncStorage.
+            try {
+              await get().getUserInfo();
+            } catch (userInfoError) {
+              const status = (userInfoError as Error & { status?: number }).status;
+              if (status === 401) {
+                throw userInfoError;
+              }
+              console.warn('Failed to load user info after login:', userInfoError);
+            }
           } else {
             throw new Error(response.message || 'Error en el login');
           }
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Error de conexión';
-          set({
-            isAuthenticated: false,
-            token: null,
-            userInfo: null,
-            isLoading: false,
-            error: errorMessage,
-          });
+          const status = (error as Error & { status?: number }).status;
+          const tokenStillStored = await authApiService.getStoredToken();
+
+          if (status === 401 || !tokenStillStored) {
+            await AsyncStorage.multiRemove(['access_token', 'user_info']);
+            set({
+              isAuthenticated: false,
+              token: null,
+              userInfo: null,
+              isLoading: false,
+              error: errorMessage,
+            });
+          } else {
+            set({
+              isLoading: false,
+              error: errorMessage,
+            });
+          }
           throw error;
         }
       },
@@ -141,7 +188,8 @@ const useAuthStore = create<AuthStore>()(
           });
 
           // If error is 401, logout user
-          if (error instanceof Error && error.message.includes('401')) {
+          const status = (error as Error & { status?: number }).status;
+          if (status === 401 || (error instanceof Error && error.message.includes('401'))) {
             await get().logout();
           }
 
@@ -195,57 +243,77 @@ const useAuthStore = create<AuthStore>()(
       },
 
       initializeAuth: async () => {
-        try {
-          set({ isLoading: true, error: null });
+        if (get().isInitialized) {
+          return;
+        }
 
-          const isAuthenticated = await authApiService.isAuthenticated();
-          const storedToken = await authApiService.getStoredToken();
-          const storedUserInfo = await authApiService.getStoredUserInfo();
-
-          if (isAuthenticated && storedToken) {
-            set({
-              isAuthenticated: true,
-              token: storedToken,
-              userInfo: storedUserInfo,
-              isLoading: false,
-              error: null,
-            });
-
-            // Try to refresh user info
+        if (!initializePromise) {
+          initializePromise = (async () => {
             try {
-              await get().getUserInfo();
+              // No escribir en AsyncStorage hasta rehidratar. Un set() previo
+              // persiste el estado inicial (token null) y borra la sesión.
+              await waitForHydration(api as AuthPersistApi);
 
-              const firebaseToken = await pushNotificationService.getToken();
-              if (firebaseToken) {
-                try {
-                  await authApiService.updateFirebaseToken(firebaseToken);
-                } catch (firebaseError) {
-                  console.warn('Failed to sync firebase token on app init:', firebaseError);
+              const storedToken = await authApiService.getStoredToken();
+              const persistedToken = get().token;
+              const token = storedToken || persistedToken;
+
+              if (token) {
+                if (storedToken !== token) {
+                  await AsyncStorage.setItem('access_token', token);
                 }
+
+                const storedUserInfo = await authApiService.getStoredUserInfo();
+
+                set({
+                  isAuthenticated: true,
+                  token,
+                  userInfo: get().userInfo ?? storedUserInfo,
+                  isLoading: false,
+                  error: null,
+                });
+
+                try {
+                  await get().getUserInfo();
+
+                  const firebaseToken = await pushNotificationService.getToken();
+                  if (firebaseToken) {
+                    try {
+                      await authApiService.updateFirebaseToken(firebaseToken);
+                    } catch (firebaseError) {
+                      console.warn('Failed to sync firebase token on app init:', firebaseError);
+                    }
+                  }
+                } catch (error) {
+                  console.warn('Failed to refresh user info on app init:', error);
+                }
+              } else if (!get().token) {
+                set({
+                  isAuthenticated: false,
+                  token: null,
+                  userInfo: null,
+                  isLoading: false,
+                  error: null,
+                });
               }
             } catch (error) {
-              // If refresh fails, user might need to login again
-              console.warn('Failed to refresh user info on app init:', error);
+              console.error('Error initializing auth:', error);
+              if (!get().token) {
+                set({
+                  isAuthenticated: false,
+                  token: null,
+                  userInfo: null,
+                  isLoading: false,
+                  error: null,
+                });
+              }
+            } finally {
+              set({ isInitialized: true, isLoading: false });
             }
-          } else {
-            set({
-              isAuthenticated: false,
-              token: null,
-              userInfo: null,
-              isLoading: false,
-              error: null,
-            });
-          }
-        } catch (error) {
-          console.error('Error initializing auth:', error);
-          set({
-            isAuthenticated: false,
-            token: null,
-            userInfo: null,
-            isLoading: false,
-            error: null,
-          });
+          })();
         }
+
+        return initializePromise;
       },
     }),
     {

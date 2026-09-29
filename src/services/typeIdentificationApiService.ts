@@ -40,13 +40,7 @@ class TypeIdentificationApiService {
     // Interceptor to handle responses and errors
     this.api.interceptors.response.use(
       response => response,
-      async error => {
-        if (error.response?.status === 401) {
-          // Token expired or invalid, clear storage
-          await AsyncStorage.multiRemove(['access_token', 'user_info']);
-        }
-        return Promise.reject(error);
-      },
+      error => Promise.reject(error),
     );
   }
 

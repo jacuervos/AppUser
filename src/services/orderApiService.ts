@@ -50,6 +50,21 @@ const orderApiService = {
     return data.data;
   },
 
+  rescheduleOrder: async (orderId: number, date: string): Promise<void> => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${ORDERS_API_URL}/orders/update-date-state/${orderId}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({
+        date,
+      }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Error al reprogramar la orden');
+    }
+  },
+
   getMyOrderActive: async (): Promise<OrderHistoryItem[]> => {
     const headers = await getAuthHeaders();
     const response = await fetch(`${ORDERS_API_URL}/orders/active`, {

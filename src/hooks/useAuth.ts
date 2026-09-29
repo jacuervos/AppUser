@@ -13,6 +13,7 @@ export const useAuth = () => {
     token,
     userInfo,
     isLoading,
+    isInitialized,
     error,
 
     // Actions
@@ -129,6 +130,7 @@ export const useAuth = () => {
     token,
     userInfo,
     isLoading,
+    isInitialized,
     error,
 
     // Actions

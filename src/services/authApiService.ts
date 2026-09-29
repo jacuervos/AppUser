@@ -68,7 +68,11 @@ class AuthApiService {
     apiInstance.interceptors.response.use(
         (response) => response,
         async (error) => {
-          if (error.response?.status === 401) {
+          const requestUrl = error.config?.url ?? '';
+          // Solo una sesión inválida en el perfil debe borrar el token.
+          // Un 401 en otras rutas (por ejemplo firebase-token) no debe
+          // eliminar la sesión recién guardada.
+          if (error.response?.status === 401 && requestUrl.includes('/auth_me')) {
             await AsyncStorage.multiRemove(['access_token', 'user_info']);
           }
           return Promise.reject(error);
@@ -120,10 +124,18 @@ class AuthApiService {
     try {
 
       const response: AxiosResponse<LoginResponse> = await this.authApi.post('/login', credentials);
+      const token = this.extractAccessToken(response.data);
 
-      // Save token to AsyncStorage
-      if (response.data.success && response.data.data.access_token) {
-        await AsyncStorage.setItem('access_token', response.data.data.access_token);
+      if (token) {
+        await AsyncStorage.setItem('access_token', token);
+        return {
+          ...response.data,
+          success: response.data?.success !== false,
+          data: {
+            ...(response.data?.data ?? { rol: '' }),
+            access_token: token,
+          },
+        };
       }
 
       return response.data;
@@ -253,11 +265,23 @@ class AuthApiService {
    * @param error - Error from API call
    * @returns formatted error message
    */
+  private extractAccessToken(body: any): string | null {
+    const token =
+      body?.data?.access_token ??
+      body?.access_token ??
+      body?.data?.token ??
+      body?.token;
+
+    return typeof token === 'string' && token.length > 0 ? token : null;
+  }
+
   private handleError(error: any): Error {
     if (error.response) {
       // Server responded with error status
       const message = error.response.data?.message || `Error ${error.response.status}: ${error.response.statusText}`;
-      return new Error(message);
+      const formatted = new Error(message);
+      (formatted as Error & { status?: number }).status = error.response.status;
+      return formatted;
     } else if (error.request) {
       // Request was made but no response received
       return new Error('No se pudo conectar con el servidor. Verifica tu conexión a internet.');

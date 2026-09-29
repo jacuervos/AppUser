@@ -79,6 +79,7 @@ export interface AuthState {
   token: string | null;
   userInfo: UserInfo | null;
   isLoading: boolean;
+  isInitialized: boolean;
   error: string | null;
 }
 

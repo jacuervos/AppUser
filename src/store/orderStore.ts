@@ -4,6 +4,7 @@ import { OrderHistoryItem, OrderPayload, OrderTypeWastePayload } from '../types/
 
 interface OrderStore {
   loading: boolean;
+  rescheduling: boolean;
   error: string | null;
   myOrders: OrderHistoryItem[];
   orderActive: OrderHistoryItem[] | [];
@@ -14,11 +15,13 @@ interface OrderStore {
   ) => Promise<boolean>;
   fetchMyOrders: () => Promise<void>;
   fetchMyOrderActive: () => Promise<void>;
+  rescheduleOrder: (orderId: number, date: string) => Promise<boolean>;
   getInfoOrderMap: (item:  OrderHistoryItem) => void;
 }
 
-const useOrderStore = create<OrderStore>(set => ({
+const useOrderStore = create<OrderStore>((set, get) => ({
   loading: false,
+  rescheduling: false,
   error: null,
   myOrders: [],
   orderActive: [],
@@ -49,6 +52,30 @@ const useOrderStore = create<OrderStore>(set => ({
         loading: false,
         error: error?.message || 'Error al obtener las órdenes',
       });
+    }
+  },
+
+  rescheduleOrder: async (orderId, date) => {
+    const formattedDate = date.includes(' ') ? date : `${date} 00:00:00`;
+    set({rescheduling: true, error: null});
+    try {
+      await orderApiService.rescheduleOrder(orderId, formattedDate);
+      set(state => ({
+        rescheduling: false,
+        orderActive: state.orderActive.map(order =>
+          order.id === orderId ? {...order, date: formattedDate} : order,
+        ),
+        myOrders: state.myOrders.map(order =>
+          order.id === orderId ? {...order, date: formattedDate} : order,
+        ),
+      }));
+      return true;
+    } catch (error: any) {
+      set({
+        rescheduling: false,
+        error: error?.message || 'Error al reprogramar la orden',
+      });
+      return false;
     }
   },
 
