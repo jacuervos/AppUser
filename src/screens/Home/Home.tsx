@@ -20,6 +20,7 @@ import homeStyles from './styles';
 import useBlogStore from "../../store/blogStore.ts";
 import useTipStore from "../../store/tipStore.ts";
 import {RescheduleOrderModal} from '../../components/modals/RescheduleOrderModal';
+import useLevelStore from "../../store/levelStore.ts";
 
 type HomeNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -33,6 +34,7 @@ const Home = (): ReactElement => {
   const {orderActive, fetchMyOrderActive, getInfoOrderMap} = useOrderStore();
   const {blogs, getBlogs} = useBlogStore();
   const {tips, getTips} = useTipStore();
+  const {getLevels} = useLevelStore();
 
   const { GeocoderModule } = NativeModules;
 
@@ -89,6 +91,7 @@ const Home = (): ReactElement => {
     fetchMyOrderActive();
     getBlogs();
     getTips();
+    getLevels();
   }, []);
 
   useEffect(() => {

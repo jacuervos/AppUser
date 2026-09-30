@@ -1,8 +1,10 @@
-import React, {ReactElement} from 'react';
+import React, {ReactElement, useEffect} from 'react';
 import {ScrollView, Text, View} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {colors} from '../../utils/constants';
 import IncentivesStyles from './styles';
+import useLevelStore from "../../store/levelStore.ts";
+import {useAuth} from "../../auth";
 
 interface Level {
   name: string;
@@ -11,20 +13,7 @@ interface Level {
   icon: string;
 }
 
-const LEVELS: Level[] = [
-  {name: 'Semilla Verde', min: 0, max: 19999, icon: 'seedling'},
-  {name: 'Aprendiz del Reciclaje', min: 20000, max: 59999, icon: 'leaf'},
-  {name: 'Guardián del Medio Ambiente', min: 60000, max: 119999, icon: 'shield-alt'},
-  {name: 'Recolector Responsable', min: 120000, max: 199999, icon: 'recycle'},
-  {name: 'Constructor Ecológico', min: 200000, max: 299999, icon: 'hammer'},
-  {name: 'Héroe Verde', min: 300000, max: 449999, icon: 'star'},
-  {name: 'Embajador del Reciclaje', min: 450000, max: 649999, icon: 'medal'},
-  {name: 'Defensor Planetario', min: 650000, max: 899999, icon: 'globe-americas'},
-  {name: 'Maestro Eco-Sabio', min: 900000, max: 1199999, icon: 'crown'},
-  {name: 'Leyenda del Reciclaje', min: 1200000, max: 999999999, icon: 'trophy'},
-];
-
-const CURRENT_POINTS = 84500;
+//const CURRENT_POINTS = 84500;
 
 const formatPoints = (value: number) => value.toLocaleString('es-CO');
 
@@ -40,11 +29,16 @@ const formatRange = (level: Level, isLast: boolean) => {
  * @return {ReactElement} - React component
  */
 export const Incentives = (): ReactElement => {
-  const currentIndex = LEVELS.findIndex(
+  const {levels} = useLevelStore();
+  const {userInfo} = useAuth();
+
+  const CURRENT_POINTS = userInfo?.points ?? 0;
+
+  const currentIndex = levels.findIndex(
     level => CURRENT_POINTS >= level.min && CURRENT_POINTS <= level.max,
   );
-  const currentLevel = LEVELS[currentIndex] ?? LEVELS[0];
-  const nextLevel = LEVELS[currentIndex + 1];
+  const currentLevel = levels[currentIndex] ?? levels[0];
+  const nextLevel = levels[currentIndex + 1];
   const pointsToNext = nextLevel ? nextLevel.min - CURRENT_POINTS : 0;
   const progress = nextLevel ? Math.min(CURRENT_POINTS / nextLevel.min, 1) : 1;
 
@@ -84,10 +78,10 @@ export const Incentives = (): ReactElement => {
 
         <Text style={IncentivesStyles.sectionTitle}>El camino</Text>
 
-        {LEVELS.map((level, index) => {
+        {levels.map((level, index) => {
           const isCurrent = index === currentIndex;
           const isUnlocked = index < currentIndex;
-          const isLast = index === LEVELS.length - 1;
+          const isLast = index === levels.length - 1;
 
           return (
             <View key={level.name} style={IncentivesStyles.levelRow}>
