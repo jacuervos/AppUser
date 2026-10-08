@@ -115,4 +115,37 @@ describe('authApiService', () => {
     );
     expect(httpClient.get).toHaveBeenCalledWith('/auth_me');
   });
+
+  it('registers a user using multipart form-data', async () => {
+    httpClient.post.mockResolvedValue({
+      data: {
+        code: 200,
+        message: 'Se ha creado el usuario correctamente',
+      },
+    });
+
+    const { authApiService } = require('../src/services/authApiService');
+
+    const response = await authApiService.register({
+      name: 'Maria Lopez',
+      phone: '3001234567',
+      identification: '100200300',
+      type_identification: 1,
+      email: 'maria@example.com',
+      password: 'secret123',
+      password_confirmation: 'secret123',
+      images: 'file:///tmp/user-photo.png',
+    });
+
+    expect(response.code).toBe(200);
+    expect(httpClient.post).toHaveBeenCalledWith(
+      '/register_user',
+      expect.any(FormData),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'Content-Type': 'multipart/form-data',
+        }),
+      })
+    );
+  });
 });
