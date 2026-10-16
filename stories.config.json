@@ -27,6 +27,27 @@
       "testPathPattern": "__tests__/authApiService.test.ts",
       "sprint": 2,
       "enabled": true
+    },
+    {
+      "id": "hu18-creacion-orden-app",
+      "title": "HU-18 Creación de orden",
+      "testPathPattern": "__tests__/orderApiService.test.ts",
+      "sprint": 3,
+      "enabled": true
+    },
+    {
+      "id": "hu21-visualizacion-recolector-app",
+      "title": "HU-21 Visualización del recolector",
+      "testPathPattern": "__tests__/orderApiService.test.ts",
+      "sprint": 3,
+      "enabled": true
+    },
+    {
+      "id": "hu23-reprogramacion-orden-app",
+      "title": "HU-23 Reprogramación de órden",
+      "testPathPattern": "__tests__/orderApiService.test.ts",
+      "sprint": 3,
+      "enabled": true
     }
   ]
 }
