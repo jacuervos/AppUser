@@ -4,18 +4,28 @@
       "id": "hu5-login-usuario-app",
       "title": "HU-5 Login Usuario (AppUser)",
       "testPathPattern": "__tests__/App.test.tsx",
+      "sprint": 1,
       "enabled": true
     },
     {
       "id": "hu2-registro-usuario-app",
       "title": "HU-2 Registro Usuario (AppUser)",
       "testPathPattern": "__tests__/authApiService.test.ts",
+      "sprint": 1,
       "enabled": true
     },
     {
       "id": "hu9-editar-usuario-app",
       "title": "HU-9 Editar Usuario (AppUser)",
       "testPathPattern": "__tests__/authApiService.test.ts",
+      "sprint": 1,
+      "enabled": true
+    },
+    {
+      "id": "hu13-recuperar-contrasena-usuario-app",
+      "title": "HU-13 Recuperar contraseña usuario",
+      "testPathPattern": "__tests__/authApiService.test.ts",
+      "sprint": 2,
       "enabled": true
     }
   ]

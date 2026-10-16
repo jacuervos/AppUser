@@ -148,4 +148,47 @@ describe('authApiService', () => {
       })
     );
   });
+
+  it('sends a password recovery email to the user', async () => {
+    httpClient.post.mockResolvedValue({
+      data: {
+        success: true,
+        message: 'Código enviado',
+      },
+    });
+
+    const { authApiService } = require('../src/services/authApiService');
+
+    const response = await authApiService.forgotPassword({ email: 'maria@example.com' });
+
+    expect(response.success).toBe(true);
+    expect(httpClient.post).toHaveBeenCalledWith('/send_code', { email: 'maria@example.com' });
+  });
+
+  it('resets the user password using the recovery token', async () => {
+    httpClient.post.mockResolvedValue({
+      data: {
+        success: true,
+        message: 'Contraseña actualizada',
+      },
+    });
+
+    const { authApiService } = require('../src/services/authApiService');
+
+    const response = await authApiService.resetPassword({
+      email: 'maria@example.com',
+      token: '654321',
+      password: 'NuevaPass123',
+      password_confirmation: 'NuevaPass123',
+    });
+
+    expect(response.success).toBe(true);
+    expect(httpClient.post).toHaveBeenCalledWith('/change_password', {
+      email: 'maria@example.com',
+      token: '654321',
+      password: 'NuevaPass123',
+      password_confirmation: 'NuevaPass123',
+      code: '654321',
+    });
+  });
 });
