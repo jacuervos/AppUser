@@ -55,6 +55,27 @@
       "testPathPattern": "__tests__/orderHistory.test.ts",
       "sprint": 4,
       "enabled": true
+    },
+    {
+      "id": "hu33-visualizacion-blogs-app",
+      "title": "HU-33 Visualización de blogs",
+      "testPathPattern": "__tests__/blogApiService.test.ts",
+      "sprint": 5,
+      "enabled": true
+    },
+    {
+      "id": "hu34-visualizacion-tips-app",
+      "title": "HU-34 Visualización de tips",
+      "testPathPattern": "__tests__/tipApiService.test.ts",
+      "sprint": 5,
+      "enabled": true
+    },
+    {
+      "id": "hu35-visualizacion-nivel-app",
+      "title": "HU-35 Visualización de nivel",
+      "testPathPattern": "__tests__/levelApiService.test.ts",
+      "sprint": 5,
+      "enabled": true
     }
   ]
 }
