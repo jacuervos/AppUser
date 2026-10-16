@@ -48,6 +48,13 @@
       "testPathPattern": "__tests__/orderApiService.test.ts",
       "sprint": 3,
       "enabled": true
+    },
+    {
+      "id": "hu26-historial-ordenes-usuario-app",
+      "title": "HU-26 Historial de ordenes usuario",
+      "testPathPattern": "__tests__/orderHistory.test.ts",
+      "sprint": 4,
+      "enabled": true
     }
   ]
 }
