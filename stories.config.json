@@ -3,21 +3,21 @@
     {
       "id": "hu5-login-usuario-app",
       "title": "HU-5 Login Usuario (AppUser)",
-      "testPathPattern": "__tests__/App.test.tsx",
+      "testPathPattern": "__tests__/Login/Login.test.tsx",
       "sprint": 1,
       "enabled": true
     },
     {
       "id": "hu2-registro-usuario-app",
       "title": "HU-2 Registro Usuario (AppUser)",
-      "testPathPattern": "__tests__/authApiService.test.ts",
+      "testPathPattern": "__tests__/Register/Register.test.tsx",
       "sprint": 1,
       "enabled": true
     },
     {
       "id": "hu9-editar-usuario-app",
       "title": "HU-9 Editar Usuario (AppUser)",
-      "testPathPattern": "__tests__/authApiService.test.ts",
+      "testPathPattern": "__tests__/Edit/Edit.test.tsx",
       "sprint": 1,
       "enabled": true
     },
