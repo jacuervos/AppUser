@@ -37,7 +37,7 @@ jest.mock('../../src/functions/Camera', () => ({
 jest.mock('react-native-toast-message', () => ({
     __esModule: true,
     default: {
-        show: mockToastShow,
+        show: jest.fn(),
     },
 }));
 

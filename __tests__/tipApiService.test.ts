@@ -51,7 +51,8 @@ describe('tipApiService (Sprint 5 - HU-34)', () => {
     );
   });
 
-  it('HU-34: throws an error when fetching tips fails', async () => {
+  it('HU-34: throws an error when fetching tips fails or when token is absent', async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(null);
     mockFetch.mockResolvedValue({
       ok: false,
     });

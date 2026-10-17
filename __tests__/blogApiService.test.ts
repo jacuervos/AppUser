@@ -53,7 +53,8 @@ describe('blogApiService (Sprint 5 - HU-33)', () => {
     );
   });
 
-  it('HU-33: throws an error when fetching blogs fails', async () => {
+  it('HU-33: throws an error when fetching blogs fails or when token is absent', async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(null);
     mockFetch.mockResolvedValue({
       ok: false,
     });

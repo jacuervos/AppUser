@@ -68,14 +68,49 @@ describe('orderApiService History (Sprint 4 - AppUser)', () => {
   });
 
   it('HU-26: throws an error when fetching user order history fails', async () => {
-    mockFetch.mockResolvedValue({
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(null);
+    mockFetch.mockResolvedValueOnce({
       ok: false,
-      json: async () => ({
-        message: 'Error al obtener las órdenes',
-      }),
+      json: async () => ({}),
     });
 
     await expect(orderApiService.getMyOrders()).rejects.toThrow('Error al obtener las órdenes');
   });
-});
 
+  it('HU-26: exercises order creation, active orders, and rescheduling in orderApiService', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: { id: 20, date: '2026-10-25' } }),
+    });
+    const created = await orderApiService.createOrderWithWastes(
+      { latitude: 4.6, longitude: -74.0, date: '2026-10-25' },
+      [{ type_waste_id: 1, weight: 2, points: 20 }]
+    );
+    expect(created.id).toBe(20);
+
+    mockFetch.mockResolvedValueOnce({ ok: false, json: async () => ({}) });
+    await expect(
+      orderApiService.createOrderWithWastes(
+        { latitude: 4.6, longitude: -74.0, date: '2026-10-25' },
+        []
+      )
+    ).rejects.toThrow('Error al crear la orden');
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: [{ id: 20 }] }),
+    });
+    expect(await orderApiService.getMyOrderActive()).toHaveLength(1);
+
+    mockFetch.mockResolvedValueOnce({ ok: false, json: async () => ({}) });
+    await expect(orderApiService.getMyOrderActive()).rejects.toThrow('Error al obtener las órdenes');
+
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({}) });
+    await orderApiService.rescheduleOrder(20, '2026-10-30');
+
+    mockFetch.mockResolvedValueOnce({ ok: false, json: async () => ({}) });
+    await expect(orderApiService.rescheduleOrder(20, '2026-10-30')).rejects.toThrow(
+      'Error al reprogramar la orden'
+    );
+  });
+});

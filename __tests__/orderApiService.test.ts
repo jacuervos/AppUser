@@ -19,7 +19,7 @@ describe('orderApiService (Sprint 3 - AppUser)', () => {
     (AsyncStorage.getItem as jest.Mock).mockResolvedValue('user-jwt-token');
   });
 
-  it('HU-18: creates a pickup order with wastes on the selected date', async () => {
+  it('HU-18: creates a pickup order with wastes on the selected date and handles errors', async () => {
     const createdOrder = {
       id: 15,
       user_id: 3,
@@ -34,7 +34,7 @@ describe('orderApiService (Sprint 3 - AppUser)', () => {
       ],
     };
 
-    mockFetch.mockResolvedValue({
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         success: true,
@@ -76,9 +76,39 @@ describe('orderApiService (Sprint 3 - AppUser)', () => {
         }),
       })
     );
+
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(null);
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({}),
+    });
+    await expect(
+      orderApiService.createOrderWithWastes(
+        { latitude: 4.6, longitude: -74.0, date: '2026-10-28' },
+        []
+      )
+    ).rejects.toThrow('Error al crear la orden');
   });
 
-  it('HU-21: retrieves active orders with collector location when collector is on the way', async () => {
+  it('retrieves user order history and handles error responses', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        data: [{ id: 10, date: '2026-10-20' }],
+      }),
+    });
+
+    const orders = await orderApiService.getMyOrders();
+    expect(orders).toHaveLength(1);
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({}),
+    });
+    await expect(orderApiService.getMyOrders()).rejects.toThrow('Error al obtener las órdenes');
+  });
+
+  it('HU-21: retrieves active orders with collector location when collector is on the way and handles errors', async () => {
     const activeOrders = [
       {
         id: 15,
@@ -99,7 +129,7 @@ describe('orderApiService (Sprint 3 - AppUser)', () => {
       },
     ];
 
-    mockFetch.mockResolvedValue({
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         success: true,
@@ -120,10 +150,18 @@ describe('orderApiService (Sprint 3 - AppUser)', () => {
         }),
       })
     );
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({}),
+    });
+    await expect(orderApiService.getMyOrderActive()).rejects.toThrow(
+      'Error al obtener las órdenes'
+    );
   });
 
-  it('HU-23: reschedules an order to a new date', async () => {
-    mockFetch.mockResolvedValue({
+  it('HU-23: reschedules an order to a new date and handles failure', async () => {
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         id: 15,
@@ -143,6 +181,13 @@ describe('orderApiService (Sprint 3 - AppUser)', () => {
         body: JSON.stringify({ date: '2026-11-02' }),
       })
     );
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({}),
+    });
+    await expect(orderApiService.rescheduleOrder(15, '2026-11-02')).rejects.toThrow(
+      'Error al reprogramar la orden'
+    );
   });
 });
-
