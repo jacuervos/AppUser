@@ -449,4 +449,92 @@ describe('Profile', () => {
         expect(mockUpdateProfile).not.toHaveBeenCalled();
         expect(mockGoBack).not.toHaveBeenCalled();
     });
+
+    it('debe restablecer el estado de cambio de imagen después de actualizar', async () => {
+        const renderer = await setup();
+
+        // Primera actualización con una nueva imagen.
+        await act(async () => {
+            await renderer.root
+                .findByProps({testID: 'take-photo'})
+                .props.onPress();
+        });
+
+        await fillValidForm(renderer);
+        await submitForm(renderer);
+
+        expect(mockUpdateProfile).toHaveBeenCalledWith(
+            expect.objectContaining({
+                images: 'https://example.com/camera.jpg',
+            }),
+            7,
+        );
+
+        // Simula que el usuario vuelve a la pantalla y la monta de nuevo.
+        // El nuevo montaje inicializa changeImage en false.
+        await act(async () => {
+            renderer.unmount();
+        });
+
+        const secondRenderer = await setup();
+        await fillValidForm(secondRenderer);
+        await submitForm(secondRenderer);
+
+        const [secondPayload] = mockUpdateProfile.mock.calls[1];
+
+        expect(secondPayload).not.toHaveProperty('images');
+    });
+
+    it('debe mostrar vacíos los campos cuando userInfo es null', async () => {
+        const renderer = await setup({
+            userInfo: null,
+        });
+
+        expect(
+            renderer.root.findByProps({testID: 'input-email'}).props.value,
+        ).toBe('');
+
+        expect(
+            renderer.root.findByProps({testID: 'input-name'}).props.value,
+        ).toBe('');
+
+        expect(
+            renderer.root.findByProps({testID: 'input-phone'}).props.value,
+        ).toBe('');
+
+        expect(
+            renderer.root.findByProps({
+                testID: 'input-identification',
+            }).props.value,
+        ).toBe('');
+    });
+
+    it('debe mantener deshabilitados el correo y la identificación', async () => {
+        const renderer = await setup();
+
+        expect(
+            renderer.root.findByProps({testID: 'input-email'}).props.editable,
+        ).toBe(false);
+
+        expect(
+            renderer.root.findByProps({
+                testID: 'input-identification',
+            }).props.editable,
+        ).toBe(false);
+    });
+
+    it('debe conservar el correo y la identificación originales al actualizar', async () => {
+        const renderer = await setup();
+
+        await fillValidForm(renderer);
+        await submitForm(renderer);
+
+        expect(mockUpdateProfile).toHaveBeenCalledWith(
+            expect.objectContaining({
+                email: 'carlos@example.com',
+                identification: '123456789',
+            }),
+            7,
+        );
+    });
 });
